@@ -5,7 +5,7 @@ NAME = expert_system
 PKG = core
 
 CC = ocamlfind ocamlopt
-CC_INT = ocamlc
+CC_INT = ocamlfind ocamlc -opaque
 
 SIDE_DIR = ./_build/
 
@@ -20,7 +20,8 @@ OBJ_DIR = $(SIDE_DIR)obj/
 SRC_DIR = ./src/
 
 SRC_ = \
-		parser.ml
+		ReadFile.ml \
+		parser.ml 
 
 OBJ = $(SRC_:%.ml=$(OBJ_DIR)%.cmx)
 
@@ -32,9 +33,12 @@ SRC = $(addprefix $(SRC_DIR), $(SRC_))
 
 CMI_DIR = $(SIDE_DIR)cmi/
 
+INC_CMI = -I $(CMI_DIR)
+
 INT_DIR = ./src/
 
 INT_ = \
+		ReadFile.mli
 
 CMI = $(INT_:%.mli=$(CMI_DIR)%.cmi)
 
@@ -52,10 +56,9 @@ install:
 	@eval $(opam config env)
 	@opam install $(PKG)
 
-$(NAME): $(OBJ_DIR) $(OBJ) $(CMI_DIR) $(CMI)
+$(NAME): $(CMI_DIR) $(CMI) $(OBJ_DIR) $(OBJ)
 	@printf "== \x1b[35m$(NAME)\x1b[0m ========================================================\n"
 	$(CC) $(CFLAGS) $(OBJ) -o $(NAME)
-
 
 $(OBJ_DIR):
 	@mkdir -p $@
@@ -64,18 +67,18 @@ $(CMI_DIR):
 	@mkdir -p $@
 
 printsrc:
-	@printf "== \x1b[34msources\x1b[0m ========================================================\n"
+	@printf "== \x1b[34mSources\x1b[0m ========================================================\n"
 
 printint:
-	@printf "== \x1b[34minterfaces\x1b[0m =====================================================\n"
+	@printf "== \x1b[34mInterfaces\x1b[0m =====================================================\n"
 
-$(OBJ_DIR)%.cmx: $(SRC_DIR)%.ml printsrc 
+$(OBJ_DIR)%.cmx: $(SRC_DIR)%.ml | printsrc 
 	@printf "$< -> $@\n"
-	@$(CC) $(CFLAGS) -c -o $@ $<
+	@$(CC) $(CFLAGS) -c -I $(CMI_DIR) -o $@ $<
 
-$(CMI_DIR)%.cmi: $(INT_DIR)%.mli printint
+$(CMI_DIR)%.cmi: $(INT_DIR)%.mli | printint
 	@printf "$< -> $@\n"
-	@$(CC_INT) -o $< -c $@
+	@$(CC_INT) -c -o $@ $<
 
 clean:
 	rm -rf $(SIDE_DIR)
