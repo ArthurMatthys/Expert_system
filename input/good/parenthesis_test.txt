@@ -1,4 +1,4 @@
-
+#Test with comments at begining
 A + B + C => D # A and B and C implies D
 A + (B + (D | (E + F))+ C) => D # A and B and C implies D
 

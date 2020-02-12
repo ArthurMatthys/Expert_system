@@ -1,19 +1,21 @@
 open Unix
 open ReadFile
+open Checker
 
-let alphabet = ["A";"B";"C";"D";"E";"F";"G";"H";"I";"J";"K";"L";"M";"N";"O";"P";"Q";"R";"S";"T";"U";"V";"W";"X";"Y";"Z";]
-let conditions = ["!";"+";"|";"^"]
-let implications = ["=";"?";">";"<"]
+let std_err = 2
 
-let explode s : string list=
+
+let usage () : unit = print_string 
+  "usage : expert_system input_file\n
+  \tinput_file\tfile to evaluate\n"
+
+
+let print_err = Printf.eprintf 
+
+let explode (s:string) : string list=
     let rec exp i l =
         if i < 0 then l else exp (i - 1) (Char.escaped s.[i] :: l) in
     exp (String.length s - 1) []
-
-
-let rec remove_comment (lst:string list) :string list = match lst with
-  | [] -> []
-  | h::t -> if h = "#" then [] else h :: remove_comment t
 
 
 let print_lex ((read, value):(string*int)):unit =
@@ -25,7 +27,16 @@ let print_lexed_line (lex_line:(string*int) list):unit =
   print_newline ()
 
 
+let alphabet = ["A";"B";"C";"D";"E";"F";"G";"H";"I";"J";"K";"L";"M";"N";"O";"P";"Q";"R";"S";"T";"U";"V";"W";"X";"Y";"Z";]
+let conditions = ["!";"+";"|";"^"]
+let implications = ["=";"?";">";"<"]
+
+
 let lexer (str:string): ((string*int) list)=
+  let rec remove_comment (lst:string list) :string list = match lst with
+    | [] -> []
+    | h::t -> if h = "#" then [] else h :: remove_comment t
+  in
   let (str_cleaned: string list) = explode @@ String.escaped str in
   let rec lex (depth:int) (lst:string list) : ((string*int )list) = match lst with
     | [] -> []
@@ -39,19 +50,15 @@ let lexer (str:string): ((string*int) list)=
           else if List.exists comp implications
             then (h, 3) :: lex depth t
             else if h = "("
-            then (h, depth + 4) :: (lex (depth+1) t)
-            else if h = ")"
-              then (h, depth + 3) :: (lex (depth-1) t)
-              else (h, -1) :: lex depth t
+              then (h, depth + 4) :: (lex (depth+1) t)
+              else if h = ")"
+                then (h, depth + 3) :: (lex (depth-1) t)
+                else (h, -1) :: lex depth t
   in
   if List.exists ((=) "#") str_cleaned
   then lex 0 @@ remove_comment str_cleaned
   else lex 0 str_cleaned
 
-
-let usage () : unit = print_string 
-  "usage : expert_system input_file\n
-  \tinput_file\tfile to evaluate\n"
 
 let _ = 
   if (Array.length Sys.argv <> 2) 
@@ -59,10 +66,13 @@ let _ =
   else
     let (file_res: (string list, string) result) = read_file Sys.argv.(1) in
     if Result.is_error file_res
-    then Printf.printf "issue reading file \"%s\" : %s" Sys.argv.(1) (Result.get_error file_res)
+    then Printf.eprintf "issue reading file \"%s\" : %s\n" Sys.argv.(1) (Result.get_error file_res)
     else
       let (file_content: string list) = Result.get_ok file_res in
       let (lexer_res: (string*int) list list) = List.map lexer file_content in
-      let _ = List.map print_lexed_line lexer_res in ()
+      let (check_res: (unit, string) result) = check_input lexer_res in 
+      if Result.is_error check_res
+      then Printf.eprintf "%s\n" @@ Result.get_error check_res
+      else ()
 
 

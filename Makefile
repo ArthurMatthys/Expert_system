@@ -20,6 +20,7 @@ OBJ_DIR = $(SIDE_DIR)obj/
 SRC_DIR = ./src/
 
 SRC_ = \
+		Checker.ml \
 		ReadFile.ml \
 		parser.ml 
 
@@ -38,6 +39,7 @@ INC_CMI = -I $(CMI_DIR)
 INT_DIR = ./src/
 
 INT_ = \
+		Checker.mli \
 		ReadFile.mli
 
 CMI = $(INT_:%.mli=$(CMI_DIR)%.cmi)
