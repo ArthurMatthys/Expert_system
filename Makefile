@@ -12,7 +12,7 @@ SIDE_DIR = ./_build/
 CFLAGS += -linkpkg -thread -package $(PKG)
 
 # **************************************************************************** #
-#                                  SOURCES                                     #
+#                                  MODULES                                     #
 # **************************************************************************** #
 
 OBJ_DIR = $(SIDE_DIR)obj/
@@ -20,16 +20,12 @@ OBJ_DIR = $(SIDE_DIR)obj/
 SRC_DIR = ./src/
 
 SRC_ = \
+		Btree.ml \
 		Checker.ml \
-		ReadFile.ml \
-		parser.ml 
-
-OBJ = $(SRC_:%.ml=$(OBJ_DIR)%.cmx)
-
-SRC = $(addprefix $(SRC_DIR), $(SRC_))
+		ReadFile.ml
 
 # **************************************************************************** #
-#                                  SOURCES                                     #
+#                                  INTERFACES                                  #
 # **************************************************************************** #
 
 CMI_DIR = $(SIDE_DIR)cmi/
@@ -39,12 +35,28 @@ INC_CMI = -I $(CMI_DIR)
 INT_DIR = ./src/
 
 INT_ = \
+		Btree.mli \
 		Checker.mli \
 		ReadFile.mli
 
 CMI = $(INT_:%.mli=$(CMI_DIR)%.cmi)
 
 INT = $(addprefix $(INT_DIR), $(INT_))
+
+# **************************************************************************** #
+#                                  SOURCES                                     #
+# **************************************************************************** #
+
+OBJ_DIR = $(SIDE_DIR)obj/
+
+SRC_DIR = ./src/
+
+SRC_ += \
+		parser.ml 
+
+OBJ = $(SRC_:%.ml=$(OBJ_DIR)%.cmx)
+
+SRC = $(addprefix $(SRC_DIR), $(SRC_))
 
 # **************************************************************************** #
 #                                    RULES                                     #

@@ -57,9 +57,14 @@ let check_input (data:(string*int) list list) : ((unit, string) result) =
         then Result.Error ("Error in line \"" ^ (_recreate_line h) ^ "\" : " ^ Result.get_error res_check)
         else let type_line = Result.get_ok res_check in
           if type_line = 1 
-          then check_file t facts true search
+          then if init
+            then Result.Error ("There is two lines containing initial facts")
+            else check_file t facts true search
+
           else if type_line = 2 
-            then check_file t facts init true
-            else check_file t true init search
+            then if search
+                then Result.Error ("There is two lines containing a query")
+                else check_file t facts init true
+          else check_file t true init search
   in
   check_file data false false false

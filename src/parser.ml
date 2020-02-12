@@ -60,6 +60,21 @@ let lexer (str:string): ((string*int) list)=
   else lex 0 str_cleaned
 
 
+let rec remove_empty_line (file:(string*int) list list): (string*int) list list=
+  match file with
+  | [] -> []
+  | h::t -> if List.length h <> 0
+    then h::(remove_empty_line t)
+    else remove_empty_line t
+
+
+let split_file (data:(string*int) list list) : ((string*int) list list)*((string*int) list)*((string*int) list) = 
+  let (query:(string*int) list) = List.hd @@ List.filter (fun e -> List.nth e 0 = ("?",3)) data in
+  let (init:(string*int) list) = List.hd @@ List.filter (fun e -> List.nth e 0 = ("=",3)) data in
+  let (facts:(string*int) list list) = List.filter (fun e -> (not (List.nth e 0 = ("=",3))) && (not (List.nth e 0 = ("?", 3)))) data in
+  (facts, init, query)
+
+
 let _ = 
   if (Array.length Sys.argv <> 2) 
   then usage ()
@@ -73,6 +88,8 @@ let _ =
       let (check_res: (unit, string) result) = check_input lexer_res in 
       if Result.is_error check_res
       then Printf.eprintf "%s\n" @@ Result.get_error check_res
-      else ()
+      else let cleaned_file = remove_empty_line lexer_res in
+        let (facts, init, query) = split_file cleaned_file in
+        let _ = List.map print_lexed_line facts in ()
 
 
