@@ -12,9 +12,6 @@ let rec _check (line:(string*int) list) (left:bool) (imply:int) (right:bool) : (
         then Result.Error ("No left part")
         else Result.Error ("No right part")
   | ("<",_)::("=", _)::(">", _)::t -> if imply = 0 
-    then Result.Error ("Not implemented")(*check t left 5 right*)
-    else Result.Error ("Multiple implications found")
-  | ("<", _)::("=", _)::t -> if imply = 0 
     then _check t left 4 right
     else Result.Error ("Multiple implications found")
   | ("=", _)::(">", _)::t -> if imply = 0 
@@ -52,7 +49,7 @@ let check_input (data:(string*int) list list) : ((unit, string) result) =
     | h::t -> if List.length h = 0 
       then check_file t facts init search
       else
-        let res_check = _check h false 0 false in
+        let (res_check: (int, string) result) = _check h false 0 false in
         if Result.is_error res_check 
         then Result.Error ("Error in line \"" ^ (_recreate_line h) ^ "\" : " ^ Result.get_error res_check)
         else let type_line = Result.get_ok res_check in
@@ -68,3 +65,14 @@ let check_input (data:(string*int) list list) : ((unit, string) result) =
           else check_file t true init search
   in
   check_file data false false false
+
+
+let check_consistency (lst_fact:(string*bool) list) (lst_states:(string*int)list): ((unit,string) result) = 
+  let unknown_facts = List.filter (fun (fact, case) -> if case <> 1 
+    then false
+    else not @@ List.exists ((=) (fact, false)) lst_fact
+    ) lst_states
+  in
+  if List.length unknown_facts = 0
+  then Result.ok ()
+  else Result.error (match List.nth unknown_facts 0 with (str,_) -> str)
