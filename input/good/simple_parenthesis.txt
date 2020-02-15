@@ -1,4 +1,5 @@
-A + B + C | D => E # A and B and C implies D
+
+A + (B + C) => D # A and B and C implies D
 
 =AB # Initial facts : A, B and G are true. All others are false.
 
