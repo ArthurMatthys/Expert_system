@@ -16,3 +16,14 @@ A + B <=> !C # A and B if and only if not C
 # If no facts are initially true, then a simple "=" followed
 # by a newline is used
 ?GVX # Queries : What are G, V and X ?
+
+let _ = 
+	let rec get_all_case (val_max:int) (case:int) (line:'a tree) : (int list) ->
+	if int > valeur max
+	then []
+	else
+		if evaluate int line 
+		then int :: evaluate (int+1) line
+		else evaluate (int+1) line
+	in
+	get_all_case (2^qqchose) 0 line
