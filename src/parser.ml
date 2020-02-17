@@ -12,6 +12,8 @@ let usage () : unit = print_string
   \tinput_file\tfile to evaluate\n
   \t\"-b\"\tChange the way to evaluate\n"
 
+let forbidden_chars = ["<";"|"]
+
 
 let string_of_bool_option (opt:bool option): string = match opt with
   | None -> "None"
@@ -66,6 +68,30 @@ let do_bonus (facts:(string*int) list list) (facts_dict:((string, bool option) H
 let initialize_facts (lst_facts: (string*(bool option)) list) (init: (string*int) list) : (string, bool option) Hashtbl.t =
   let m = Hashtbl.create 26 in m
 
+
+
+(* 
+    Aim fo the function : 
+    Tail recursion that checks wether the list contains any of the forbidden chars passed in parameter (after or during the implication) and returns a Result type : ok, or the line of the error
+    The status bool helps checking wether we are prior or past the =>/<=> sign. False --> prior, true --> during or after
+    The forbidden_chars contains a list of strings that are forbidden chars. In our case -> "|" and "<"
+    Entire_lst is used to have a working copy of the entire line, for the error management
+ *)
+
+let check_correctness_imply_list (lst:(string*int) list): ((unit, string) result) = 
+  let rec check_correctness_imply (lst:(string*int) list) (forbidden_chars: (string) list) (status:(bool)) (entire_lst: (string*int) list): ((unit, string) result) =
+    match lst with 
+    | [] -> Result.Ok()
+    | (h,v)::t -> if (v = 2 || status = true)
+      then
+        let comp = ((=) h) in
+          if List.exists comp forbidden_chars
+          then Result.Error ("Error in line \"" ^ (recreate_line entire_lst))
+          else check_correctness_imply t forbidden_chars true entire_lst
+      else check_correctness_imply t forbidden_chars false entire_lst
+  in
+  check_correctness_imply lst forbidden_chars false lst
+
 let _ =
   if not @@ ((Array.length Sys.argv = 2) || (Array.length Sys.argv = 3 && Sys.argv.(2) = "-b"))
   then usage ()
@@ -80,7 +106,7 @@ let _ =
       if Result.is_error check_res
       then Printf.eprintf "%s\n" @@ Result.get_error check_res
       else let (cleaned_file: (string*int) list list) = remove_empty_line lexer_res in
-        let (facts, init, query) = split_file cleaned_file in
+        let ((facts: (string*int) list list), (init: (string*int) list), (query: (string*int) list)) = split_file cleaned_file in
         let (lst_facts:(string*(bool option)) list) = get_facts facts in
         let (query_check:(unit,string)result) = check_consistency lst_facts query in
         if not @@ List.for_all count_even_parenthesis facts 
@@ -94,7 +120,24 @@ let _ =
             then Printf.eprintf "Fact in init wasn't found in facts list : %s\n" @@ Result.get_error init_check
             else
               if Array.length Sys.argv = 2
-              then do_mandatory facts (initialize_facts lst_facts init)
+              then
+              (* then do_mandatory facts (initialize_facts lst_facts init) *)
+              (* HERE WE CHECK THE CORRECTNESS OF THE FILE --> NEED TO PARSE AND CHECK THE RETURN *)
+              let _ = List.map check_correctness_imply_list facts in ()
               else do_bonus facts (initialize_facts lst_facts init)
 
+(* 
+POUR CAS NORMAL
+// Fonction qui retourne erreur si jamais il y a un | à droite de l'implication ou équivalence
+// Customiser pour afficher la ligne (dans le checker, "recreate line"), qui prend une (string * int) list et qui renvoie un result, soit Unit (bon) soit string (pas bon). Si ligne est ok, on renvoie result.ok, si unit, on renvoie un result.string
+// Je map la list list avec la fonction, et s'il y a une erreur (unit*result*string) list
 
+facts --> (string*int)
+
+POUR BONUS
+// Fonction qui transforme l'implication par l'équivalence
+A => B == !(A) | (B) ; A + B == !(A + B) | C
+A <=> B == (A => et B => A), donc ça fait :: ((!(A) | (B)) + (!(B) | (A)))
+Table de vérité
+// Fonction qui prend cette liste-liste
+ *)

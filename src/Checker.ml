@@ -1,6 +1,6 @@
-let rec _recreate_line (line:(string*int)list):string = match line with
+let rec recreate_line (line:(string*int)list):string = match line with
   | [] -> ""
-  | (h,_)::t -> h ^ (_recreate_line t)
+  | (h,_)::t -> h ^ (recreate_line t)
 
 let rec _recreate_line2 (line:(string*int*int)list):string = match line with
   | [] -> ""
@@ -54,7 +54,7 @@ let check_input (data:(string*int) list list) : ((unit, string) result) =
       else
         let (res_check: (int, string) result) = _check h false 0 false in
         if Result.is_error res_check 
-        then Result.Error ("Error in line \"" ^ (_recreate_line h) ^ "\" : " ^ Result.get_error res_check)
+        then Result.Error ("Error in line \"" ^ (recreate_line h) ^ "\" : " ^ Result.get_error res_check)
         else let type_line = Result.get_ok res_check in
           if type_line = 1 
           then if init
