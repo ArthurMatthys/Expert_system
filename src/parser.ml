@@ -74,7 +74,7 @@ let initialize_facts (lst_facts: (string*(bool option)) list) (init: (string*int
     Aim fo the function : 
     Tail recursion that checks wether the list contains any of the forbidden chars passed in parameter (after or during the implication) and returns a Result type : ok, or the line of the error
     The status bool helps checking wether we are prior or past the =>/<=> sign. False --> prior, true --> during or after
-    The forbidden_chars contains a list of strings that are forbidden chars. In our case -> "|" and "<"
+    The forbidden_chars contains a list of strings that are forbidden chars. In our case -> "|" and "<" ==> Declared at the top of this file
     Entire_lst is used to have a working copy of the entire line, for the error management
  *)
 
@@ -125,19 +125,3 @@ let _ =
               (* HERE WE CHECK THE CORRECTNESS OF THE FILE --> NEED TO PARSE AND CHECK THE RETURN *)
               let _ = List.map check_correctness_imply_list facts in ()
               else do_bonus facts (initialize_facts lst_facts init)
-
-(* 
-POUR CAS NORMAL
-// Fonction qui retourne erreur si jamais il y a un | à droite de l'implication ou équivalence
-// Customiser pour afficher la ligne (dans le checker, "recreate line"), qui prend une (string * int) list et qui renvoie un result, soit Unit (bon) soit string (pas bon). Si ligne est ok, on renvoie result.ok, si unit, on renvoie un result.string
-// Je map la list list avec la fonction, et s'il y a une erreur (unit*result*string) list
-
-facts --> (string*int)
-
-POUR BONUS
-// Fonction qui transforme l'implication par l'équivalence
-A => B == !(A) | (B) ; A + B == !(A + B) | C
-A <=> B == (A => et B => A), donc ça fait :: ((!(A) | (B)) + (!(B) | (A)))
-Table de vérité
-// Fonction qui prend cette liste-liste
- *)
