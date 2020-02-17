@@ -79,3 +79,17 @@ let check_consistency (lst_fact:(string*(bool option)) list) (lst_states:(string
   if List.length unknown_facts = 0
   then Result.ok ()
   else Result.error (match List.nth unknown_facts 0 with (str,_) -> str)
+
+
+let count_even_parenthesis (facts_list:(string*int)list) : bool =
+  let rec count (facts_lst:(string*int)list) (nbr:int) : bool =
+    match facts_lst with
+    | [] -> nbr = 0
+    | (h,_)::t -> if h = "("
+      then count t (nbr+1)
+      else
+        if h = ")"
+        then count t (nbr-1)
+        else count t nbr
+  in
+  count facts_list 0
