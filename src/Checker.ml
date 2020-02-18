@@ -2,10 +2,6 @@ let rec recreate_line (line:(string*int)list):string = match line with
   | [] -> ""
   | (h,_)::t -> h ^ (recreate_line t)
 
-let rec _recreate_line2 (line:(string*int*int)list):string = match line with
-  | [] -> ""
-  | (h,_,_)::t -> h ^ (_recreate_line2 t)
-
 let rec _check (line:(string*int) list) (left:bool) (imply:int) (right:bool) : ((int, string) result) = match line with
   | [] -> if left && right && imply <> 0 
     then Result.ok (imply)

@@ -86,7 +86,7 @@ let check_correctness_imply_list (lst:(string*int) list): ((unit, string) result
       then
         let comp = ((=) h) in
           if List.exists comp forbidden_chars
-          then Result.Error ("Error in line \"" ^ (recreate_line entire_lst))
+          then Result.Error ("Error in line \"" ^ (recreate_line entire_lst) ^ "\"")
           else check_correctness_imply t forbidden_chars true entire_lst
       else check_correctness_imply t forbidden_chars false entire_lst
   in

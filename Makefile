@@ -20,11 +20,10 @@ OBJ_DIR = $(SIDE_DIR)obj/
 SRC_DIR = ./src/
 
 SRC_ = \
-	   	Library.ml \
+		Library.ml \
 		Btree.ml \
 		Checker.ml \
 		Lexer.ml \
-		Operation.ml \
 		ReadFile.ml
 
 # **************************************************************************** #
@@ -42,7 +41,6 @@ INT_ = \
 		Btree.mli \
 		Checker.mli \
 		Lexer.mli \
-		Operation.mli \
 		ReadFile.mli
 
 CMI = $(INT_:%.mli=$(CMI_DIR)%.cmi)
