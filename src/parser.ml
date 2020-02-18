@@ -123,5 +123,7 @@ let _ =
               then
               (* then do_mandatory facts (initialize_facts lst_facts init) *)
               (* HERE WE CHECK THE CORRECTNESS OF THE FILE --> NEED TO PARSE AND CHECK THE RETURN *)
-              let _ = List.map check_correctness_imply_list facts in ()
+              let _ = List.map check_correctness_imply_list facts in
+              let (trees: exp_ast list) = List.map (fun e -> exp_ast_of_list @@ remove_imply e) facts in
+              let _ = List.map print_exp_ast trees in ()
               else do_bonus facts (initialize_facts lst_facts init)

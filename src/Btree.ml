@@ -20,6 +20,16 @@ type exp_ast =
   | Letter of string
   | Empty
 
+let rec print_exp_ast (expr:exp_ast) : unit =
+  match expr with 
+  | And (left, right) -> print_string "and("; print_exp_ast left; print_string " , "; print_exp_ast right; print_string ")"
+  | Or (left, right) -> print_string "or("; print_exp_ast left; print_string " , "; print_exp_ast right; print_string ")"
+  | Xor (left, right) -> print_string "xor("; print_exp_ast left; print_string " , "; print_exp_ast right; print_string ")"
+  | Not (right) -> print_string "not("; print_exp_ast right; print_string ")"
+  | Letter letter -> print_string letter
+  | Empty -> ()
+  | Imply (_,_) -> ()
+
 let _filteri (func: int -> 'a -> bool) (lst:'a list): 'a list = 
   let rec loop__filteri (func: int -> 'a -> bool) (lst:'a list) (index: int): 'a list =
     match lst with
