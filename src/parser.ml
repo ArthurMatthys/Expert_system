@@ -68,8 +68,6 @@ let do_bonus (facts:(string*int) list list) (facts_dict:((string, bool option) H
 let initialize_facts (lst_facts: (string*(bool option)) list) (init: (string*int) list) : (string, bool option) Hashtbl.t =
   let m = Hashtbl.create 26 in m
 
-
-
 (* 
     Aim fo the function : 
     Tail recursion that checks wether the list contains any of the forbidden chars passed in parameter (after or during the implication) and returns a Result type : ok, or the line of the error
@@ -78,19 +76,20 @@ let initialize_facts (lst_facts: (string*(bool option)) list) (init: (string*int
     Entire_lst is used to have a working copy of the entire line, for the error management
  *)
 
-let check_correctness_imply_list (lst:(string*int) list): ((unit, string) result) = 
-  let rec check_correctness_imply (lst:(string*int) list) (forbidden_chars: (string) list) (status:(bool)) (entire_lst: (string*int) list): ((unit, string) result) =
+let check_correctness_imply_list (lst:(string*int) list): unit = 
+  let rec check_correctness_imply (lst:(string*int) list) (forbidden_chars: (string) list) (status:(bool)): ((unit, string) result) =
     match lst with 
     | [] -> Result.Ok()
     | (h,v)::t -> if (v = 2 || status = true)
       then
         let comp = ((=) h) in
           if List.exists comp forbidden_chars
-          then Result.Error ("Error in line \"" ^ (recreate_line entire_lst) ^ "\"")
-          else check_correctness_imply t forbidden_chars true entire_lst
-      else check_correctness_imply t forbidden_chars false entire_lst
+          then Result.Error (h)
+          else check_correctness_imply t forbidden_chars true 
+      else check_correctness_imply t forbidden_chars false 
   in
-  check_correctness_imply lst forbidden_chars false lst
+  let result = check_correctness_imply lst forbidden_chars false in
+  (if (Result.is_error result) then Printf.eprintf "Error in line \"%s\" : with char %s\n" (recreate_line lst) (Result.get_error result) ; exit 1)
 
 let _ =
   if not @@ ((Array.length Sys.argv = 2) || (Array.length Sys.argv = 3 && Sys.argv.(2) = "-b"))
@@ -120,10 +119,9 @@ let _ =
             then Printf.eprintf "Fact in init wasn't found in facts list : %s\n" @@ Result.get_error init_check
             else
               if Array.length Sys.argv = 2
-              then
               (* then do_mandatory facts (initialize_facts lst_facts init) *)
               (* HERE WE CHECK THE CORRECTNESS OF THE FILE --> NEED TO PARSE AND CHECK THE RETURN *)
-              let _ = List.map check_correctness_imply_list facts in
+              then let _ = List.iter check_correctness_imply_list facts in
               let (trees: exp_ast list) = List.map (fun e -> exp_ast_of_list @@ remove_imply e) facts in
               let _ = List.map print_exp_ast trees in ()
               else do_bonus facts (initialize_facts lst_facts init)
