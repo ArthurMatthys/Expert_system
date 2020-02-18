@@ -12,7 +12,7 @@ let usage () : unit = print_string
   \tinput_file\tfile to evaluate\n
   \t\"-b\"\tChange the way to evaluate\n"
 
-let forbidden_chars = ["<";"|"]
+let forbidden_chars = ["<=>";"|"]
 
 
 let string_of_bool_option (opt:bool option): string = match opt with
@@ -80,7 +80,7 @@ let check_correctness_imply_list (lst:(string*int) list): unit =
   let rec check_correctness_imply (lst:(string*int) list) (forbidden_chars: (string) list) (status:(bool)): ((unit, string) result) =
     match lst with 
     | [] -> Result.Ok()
-    | (h,v)::t -> if (v = 2 || status = true)
+    | (h,v)::t -> if (v = 2 || v = 4 || status = true)
       then
         let comp = ((=) h) in
           if List.exists comp forbidden_chars
@@ -90,7 +90,7 @@ let check_correctness_imply_list (lst:(string*int) list): unit =
   in
   let result = check_correctness_imply lst forbidden_chars false in
   if Result.is_error result
-  then Printf.eprintf "Error in line \"%s\" : with char %s\n" (recreate_line lst) (Result.get_error result)
+  then begin Printf.eprintf "Error in line \"%s\" : with char %s\n" (recreate_line lst) (Result.get_error result) ; exit 1 end
   else ()
 
 let _ =
