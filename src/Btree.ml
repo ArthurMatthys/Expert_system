@@ -1,15 +1,5 @@
 open Library
-
-type 'a binary_tree =
-  | Empty
-  | Node of 'a * 'a binary_tree * 'a binary_tree
-
-
-type expr =
-  | Empty
-  | Leaf of string
-  | Ope of (bool  option -> bool option -> bool option)
-
+open Operation
 
 type exp_ast =
   | Equi of exp_ast * exp_ast
@@ -24,8 +14,8 @@ type exp_ast =
 let print_exp_ast (expr:exp_ast) : unit =
   let rec print (expression:exp_ast) : unit = 
     match expression with 
-    | Equi (left,right) -> print left; print_string "<=>"; print right
-    | Imply (left,right) -> print left; print_string "=>"; print right
+    | Equi (left,right) -> print_string "equi("; print left; print_string " , "; print right;print_string ")"
+    | Imply (left,right) -> print_string "imply("; print left; print_string " , "; print right;print_string ")"
     | And (left, right) -> print_string "and("; print left; print_string " , "; print right; print_string ")"
     | Or (left, right) -> print_string "or("; print left; print_string " , "; print right; print_string ")"
     | Xor (left, right) -> print_string "xor("; print left; print_string " , "; print right; print_string ")"
@@ -86,33 +76,15 @@ let rec exp_ast_of_list (facts_list:(string*int)list) : exp_ast =
     | _ -> Empty
 
 
-let rec btree_of_list (facts_list:(string*int)list) : (expr binary_tree) =
-  let rec find_priority_ope (facts_lst:(string*int)list) (index_max: int) (value: int) (index: int): int =
-    match facts_lst with
-    | [] -> index_max
-    | (h,v)::t -> if v >= 3 && (value = 0 || v <= value) 
-                  then find_priority_ope t index v (index + 1)
-                  else find_priority_ope t index_max value (index + 1)
-  in
-  match facts_list with
-  | [] -> Empty
-  | (h,v)::[] -> Node (Leaf h, Empty, Empty)
-  | _ -> let split_index = find_priority_ope facts_list 0 0 0 in
-    let (ope: (bool option -> bool option -> bool option)) = _ope_of_string @@ List.nth facts_list split_index in
-    Node (Ope ope,
-        btree_of_list @@ remove_parenthesis @@ _filteri (fun index _ -> index < split_index) facts_list,
-        btree_of_list @@ remove_parenthesis @@ _filteri (fun index _ -> index > split_index) facts_list)
-
-
-
-let evaluate_tree (tree : expr binary_tree) (facts_dict:((string, bool option) Hashtbl.t)): bool option =
-  let rec evaluate (tree : expr binary_tree) : bool option =
+let evaluate_expr (expr : exp_ast) (facts_dict:((string, bool option) Hashtbl.t)): bool option =
+  let rec evaluate (tree : exp_ast) : bool option =
     match tree with
     | Empty -> Some false
-    | Node(Leaf h, _, _) -> Hashtbl.find facts_dict h
-    | Node(Ope h, left, Empty) -> h (evaluate left) (Some false)
-    | Node(Ope h, Empty, right) -> h (evaluate right) (Some false)
-    | Node(Ope h, left, right) -> h (evaluate right) (evaluate left)
-    | Node(Empty, _, _) -> Some false
+    | Letter l -> Hashtbl.find facts_dict l
+    | And (left, right) -> my_and (evaluate left) (evaluate right)
+    | Or (left, right) -> my_or (evaluate left) (evaluate right)
+    | Xor (left, right) -> my_xor (evaluate left) (evaluate right)
+    | Not (right) -> my_not (evaluate right)
+    | _ -> Some false
   in
-  evaluate tree
+  evaluate expr

@@ -90,7 +90,8 @@ let check_correctness_imply_list (lst:(string*int) list): unit =
   in
   let result = check_correctness_imply lst forbidden_chars false in
   if Result.is_error result
-  then Printf.eprintf "Error in line \"%s\" : with char %s\n" (recreate_line lst) (Result.get_error result); exit 1
+  then Printf.eprintf "Error in line \"%s\" : with char %s\n" (recreate_line lst) (Result.get_error result)
+  else ()
 
 let _ =
   if not @@ ((Array.length Sys.argv = 2) || (Array.length Sys.argv = 3 && Sys.argv.(2) = "-b"))

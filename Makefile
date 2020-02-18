@@ -21,9 +21,10 @@ SRC_DIR = ./src/
 
 SRC_ = \
 		Library.ml \
-		Btree.ml \
 		Checker.ml \
 		Lexer.ml \
+		Operation.ml \
+		Btree.ml \
 		ReadFile.ml
 
 # **************************************************************************** #
@@ -38,9 +39,10 @@ INT_DIR = ./src/
 
 INT_ = \
 		Library.mli \
-		Btree.mli \
 		Checker.mli \
 		Lexer.mli \
+		Operation.mli \
+		Btree.mli \
 		ReadFile.mli
 
 CMI = $(INT_:%.mli=$(CMI_DIR)%.cmi)
