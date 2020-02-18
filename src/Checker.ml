@@ -10,10 +10,10 @@ let rec _check (line:(string*int) list) (left:bool) (imply:int) (right:bool) : (
       else if not left
         then Result.Error ("No left part")
         else Result.Error ("No right part")
-  | ("<",_)::("=", _)::(">", _)::t -> if imply = 0 
+  | ("<=>",_)::t -> if imply = 0 
     then _check t left 4 right
     else Result.Error ("Multiple implications found")
-  | ("=", _)::(">", _)::t -> if imply = 0 
+  | ("=>", _)::t -> if imply = 0 
     then _check t left 3 right
     else Result.Error ("Multiple implications found")
   | ("=", _)::t -> if imply = 0 || left

@@ -12,6 +12,7 @@ type expr =
 
 
 type exp_ast =
+  | Equi of exp_ast * exp_ast
   | Imply of exp_ast * exp_ast
   | And of exp_ast * exp_ast
   | Or of exp_ast * exp_ast
@@ -20,15 +21,20 @@ type exp_ast =
   | Letter of string
   | Empty
 
-let rec print_exp_ast (expr:exp_ast) : unit =
-  match expr with 
-  | And (left, right) -> print_string "and("; print_exp_ast left; print_string " , "; print_exp_ast right; print_string ")"
-  | Or (left, right) -> print_string "or("; print_exp_ast left; print_string " , "; print_exp_ast right; print_string ")"
-  | Xor (left, right) -> print_string "xor("; print_exp_ast left; print_string " , "; print_exp_ast right; print_string ")"
-  | Not (right) -> print_string "not("; print_exp_ast right; print_string ")"
-  | Letter letter -> print_string letter
-  | Empty -> ()
-  | Imply (_,_) -> ()
+let print_exp_ast (expr:exp_ast) : unit =
+  let rec print (expression:exp_ast) : unit = 
+    match expression with 
+    | Equi (left,right) -> print left; print_string "<=>"; print right
+    | Imply (left,right) -> print left; print_string "=>"; print right
+    | And (left, right) -> print_string "and("; print left; print_string " , "; print right; print_string ")"
+    | Or (left, right) -> print_string "or("; print left; print_string " , "; print right; print_string ")"
+    | Xor (left, right) -> print_string "xor("; print left; print_string " , "; print right; print_string ")"
+    | Not (right) -> print_string "not("; print right; print_string ")"
+    | Letter letter -> print_string letter
+    | Empty -> ()
+  in
+  print expr ; print_newline ()
+
 
 let _filteri (func: int -> 'a -> bool) (lst:'a list): 'a list = 
   let rec loop__filteri (func: int -> 'a -> bool) (lst:'a list) (index: int): 'a list =
@@ -71,6 +77,8 @@ let rec exp_ast_of_list (facts_list:(string*int)list) : exp_ast =
     let (left:(string*int)list) = remove_parenthesis @@ _filteri (fun index _ -> index < split_index) facts_list in
     let (right:(string*int)list) = remove_parenthesis @@ _filteri (fun index _ -> index > split_index) facts_list in
     match List.nth facts_list split_index with
+    | ("<=>", _) -> Equi (exp_ast_of_list left, exp_ast_of_list right)
+    | ("=>", _) -> Imply (exp_ast_of_list left, exp_ast_of_list right)
     | ("+", _) -> And (exp_ast_of_list left, exp_ast_of_list right)
     | ("|", _) -> Or (exp_ast_of_list left, exp_ast_of_list right)
     | ("^", _) -> Xor (exp_ast_of_list left, exp_ast_of_list right)

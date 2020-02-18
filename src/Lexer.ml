@@ -28,14 +28,18 @@ let lexer (str:string): ((string*int) list)=
       else if List.exists comp alphabet 
         then (h, 1) :: lex depth t
         else if List.exists comp implications
-        then (h, 2) :: lex depth t
+        then match t with
+          | [] -> []
+          | "="::">"::tl -> ("<=>", 4) :: lex depth tl
+          | ">"::tl -> ("=>", 3) :: lex depth tl
+          | _ -> (h, 2) :: lex depth t
           else if List.exists comp conditions
-          then (h, (3 + 4*depth + (index_of conditions h))) :: lex depth t
+          then (h, (5 + 4*depth + (index_of conditions h))) :: lex depth t
             else if h = "("
-              then (h, 3 + 4*(depth+1)) :: (lex (depth+1) t)
+              then (h, 5 + 4*(depth+1)) :: (lex (depth+1) t)
               else if h = ")"
-                then (h, 3 + 4*depth) :: (lex (depth-1) t)
-                else (h, -1) :: lex depth t
+                then (h, 5 + 4*depth) :: (lex (depth-1) t)
+                else (h, -2) :: lex depth t
   in
   if List.exists ((=) "#") str_cleaned
   then lex 0 @@ remove_comment str_cleaned
