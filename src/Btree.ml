@@ -67,8 +67,8 @@ let rec exp_ast_of_list (facts_list:(string*int)list) : exp_ast =
     let (left:(string*int)list) = remove_parenthesis @@ _filteri (fun index _ -> index < split_index) facts_list in
     let (right:(string*int)list) = remove_parenthesis @@ _filteri (fun index _ -> index > split_index) facts_list in
     match List.nth facts_list split_index with
-    | ("<=>", _) -> Equi (exp_ast_of_list left, exp_ast_of_list right)
-    | ("=>", _) -> Imply (exp_ast_of_list left, exp_ast_of_list right)
+    | ("<=>", _) -> And (Or (Not (exp_ast_of_list left), exp_ast_of_list right), Or(exp_ast_of_list left, Not (exp_ast_of_list right)))
+    | ("=>", _) -> Or (Not (exp_ast_of_list left), exp_ast_of_list right)
     | ("+", _) -> And (exp_ast_of_list left, exp_ast_of_list right)
     | ("|", _) -> Or (exp_ast_of_list left, exp_ast_of_list right)
     | ("^", _) -> Xor (exp_ast_of_list left, exp_ast_of_list right)

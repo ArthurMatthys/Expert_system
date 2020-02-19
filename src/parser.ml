@@ -58,6 +58,10 @@ let rec remove_imply (lst:(string*int) list) : (string*int) list =
     else (h,v):: remove_imply t
 
 
+(*
+  Backward-chaining inference engine
+ *)
+
 let do_mandatory (facts:(string*int) list list) (facts_dict:((string, bool option) Hashtbl.t)): unit = ()
 
 
@@ -97,13 +101,15 @@ let _ =
   if not @@ ((Array.length Sys.argv = 2) || (Array.length Sys.argv = 3 && Sys.argv.(2) = "-b"))
   then usage ()
   else
+    let (bonus:bool) = Array.length Sys.argv = 3 in
     let (file_res: (string list, string) result) = read_file Sys.argv.(1) in
     if Result.is_error file_res
     then Printf.eprintf "issue reading file \"%s\" : %s\n" Sys.argv.(1) (Result.get_error file_res)
     else
       let (file_content: string list) = Result.get_ok file_res in
       let (lexer_res: (string*int) list list) = List.map lexer file_content in
-      let (check_res: (unit, string) result) = check_input lexer_res in 
+      let _ = List.map print_lexed_line lexer_res in
+      let (check_res: (unit, string) result) = if not bonus then check_input_mandatory lexer_res else check_input_bonus lexer_res in
       if Result.is_error check_res
       then Printf.eprintf "%s\n" @@ Result.get_error check_res
       else let (cleaned_file: (string*int) list list) = remove_empty_line lexer_res in
@@ -120,10 +126,12 @@ let _ =
             if Result.is_error init_check
             then Printf.eprintf "Fact in init wasn't found in facts list : %s\n" @@ Result.get_error init_check
             else
-              if Array.length Sys.argv = 2
+              if not bonus
               (* then do_mandatory facts (initialize_facts lst_facts init) *)
               (* HERE WE CHECK THE CORRECTNESS OF THE FILE --> NEED TO PARSE AND CHECK THE RETURN *)
               then let _ = List.iter check_correctness_imply_list facts in
               let (trees: exp_ast list) = List.map (fun e -> exp_ast_of_list @@ remove_imply e) facts in
               let _ = List.map print_exp_ast trees in ()
-              else do_bonus facts (initialize_facts lst_facts init)
+              else
+                let (trees: exp_ast) = unite_facts in
+                let _ = print_exp_ast trees in ()
