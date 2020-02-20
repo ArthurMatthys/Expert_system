@@ -58,11 +58,32 @@ let rec remove_imply (lst:(string*int) list) : (string*int) list =
     else (h,v):: remove_imply t
 
 
+let print_hash (key:string) (value:bool option) : unit =
+  if Option.is_none value
+  then let _ = print_endline @@ key ^ " -> None" in ()
+  else let _ = print_endline @@ key ^ " -> " ^ (string_of_bool @@ Option.get value) in ()
 (*
   Backward-chaining inference engine
  *)
 
-let do_mandatory (facts:(string*int) list list) (facts_dict:((string, bool option) Hashtbl.t)): unit = ()
+let find_tree (tree_lst : exp_ast list) (fact : string) : exp_ast list =
+  let rec dig_right (tree : exp_ast) : bool = match tree with
+    | Empty -> false
+    | Letter l -> l = fact
+    | And (left, right) -> dig_right left || dig_right right
+    | Not (right) -> dig_right right
+    | _ -> false
+  in
+  [Empty]
+
+
+let do_mandatory (facts: exp_ast list) (query: string list) (facts_dict:((string, bool option) Hashtbl.t)): unit =
+  let _ = Hashtbl.iter print_hash facts_dict in
+  let _ = Hashtbl.replace facts_dict "W" (Some true) in
+  let _ = print_string "\n\n\n" in
+  let _ = Hashtbl.iter print_hash facts_dict in
+  let _ = print_string "\n\n\n" in
+  let _ = Hashtbl.iter print_hash facts_dict in ()
 
 
 
@@ -79,6 +100,20 @@ let initialize_facts (lst_facts: (string*(bool option)) list) (init: (string*int
     The forbidden_chars contains a list of strings that are forbidden chars. In our case -> "|" and "<" ==> Declared at the top of this file
     Entire_lst is used to have a working copy of the entire line, for the error management
  *)
+
+let initialize_mandatory (initialize:(string*int) list) (facts: (string*bool option) list) : (string, bool option) Hashtbl.t =
+  let hash = Hashtbl.create @@ List.length facts in 
+  let rec add_true_facts init : unit = match init with
+    | [] -> ()
+    | (h,_)::t -> Hashtbl.add hash h @@ Some (true); add_true_facts t
+  in
+  let rec add_leftover facts : unit = match facts with
+    | [] -> ()
+    | (h,_)::t -> if Hashtbl.mem hash h 
+      then add_leftover t
+      else Hashtbl.add hash h None; add_leftover t
+  in
+  add_true_facts initialize; add_leftover facts; hash
 
 let check_correctness_imply_list (lst:(string*int) list): unit = 
   let rec check_correctness_imply (lst:(string*int) list) (forbidden_chars: (string) list) (status:(bool)): ((unit, string) result) =
@@ -97,6 +132,10 @@ let check_correctness_imply_list (lst:(string*int) list): unit =
   then begin Printf.eprintf "Error in line \"%s\" : with char %s\n" (recreate_line lst) (Result.get_error result) ; exit 1 end
   else ()
 
+let rec remove_bool_opt (lst : (string*int) list) : string list = match lst with
+  | [] -> []
+  | (h,v)::t -> h :: remove_bool_opt t
+
 let _ =
   if not @@ ((Array.length Sys.argv = 2) || (Array.length Sys.argv = 3 && Sys.argv.(2) = "-b"))
   then usage ()
@@ -108,7 +147,6 @@ let _ =
     else
       let (file_content: string list) = Result.get_ok file_res in
       let (lexer_res: (string*int) list list) = List.map lexer file_content in
-      let _ = List.map print_lexed_line lexer_res in
       let (check_res: (unit, string) result) = if not bonus then check_input_mandatory lexer_res else check_input_bonus lexer_res in
       if Result.is_error check_res
       then Printf.eprintf "%s\n" @@ Result.get_error check_res
@@ -131,7 +169,10 @@ let _ =
               (* HERE WE CHECK THE CORRECTNESS OF THE FILE --> NEED TO PARSE AND CHECK THE RETURN *)
               then let _ = List.iter check_correctness_imply_list facts in
               let (trees: exp_ast list) = List.map (fun e -> exp_ast_of_list @@ remove_imply e) facts in
-              let _ = List.map print_exp_ast trees in ()
-              else
-                let (trees: exp_ast) = unite_facts in
-                let _ = print_exp_ast trees in ()
+              let _ = List.map print_exp_ast trees in
+              do_mandatory trees (remove_bool_opt query) @@ initialize_mandatory (List.tl init) lst_facts
+              else ()
+                (*
+                  let (trees: exp_ast) = unite_facts in
+                  let _ = print_exp_ast trees in ()
+                *)
