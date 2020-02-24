@@ -62,28 +62,98 @@ let print_hash (key:string) (value:bool option) : unit =
   if Option.is_none value
   then let _ = print_endline @@ key ^ " -> None" in ()
   else let _ = print_endline @@ key ^ " -> " ^ (string_of_bool @@ Option.get value) in ()
+
 (*
   Backward-chaining inference engine
  *)
-
 let find_tree (tree_lst : exp_ast list) (fact : string) : exp_ast list =
-  let rec dig_right (tree : exp_ast) : bool = match tree with
+(*
+  Recursive function that parses the tree and checks wether the letter is found on the right side (after the implication)
+*)
+  let rec dig_right (tree : exp_ast) : bool = 
+  match tree with
+    | Imply (left, right) -> dig_right right
     | Empty -> false
-    | Letter l -> l = fact
+    | Letter l -> if l = fact then true else false
     | And (left, right) -> dig_right left || dig_right right
     | Not (right) -> dig_right right
+    | Or (left, right) -> dig_right left || dig_right right
+    | Xor (left, right) -> dig_right left || dig_right right
     | _ -> false
   in
-  [Empty]
+  (* Function that retrieves the tree if a true is found, otherwise an empty *)
+  let dig (tree : exp_ast) : exp_ast =
+    let (result: bool) = dig_right tree in
+    match result with
+    | true -> tree
+    | false -> Empty
+  in
+  (* Create a list out of it *)
+  let (tmp_result: exp_ast list) = List.map (fun x -> dig x) tree_lst in
+  (* Filter all the empty trees *)
+  let (filtered_result: exp_ast list) = List.filter (fun x -> x <> Empty) tmp_result in
+  filtered_result
 
+(* Tail recursive function that checks wether all elements of the list are the same *)
+let check_incoherence_in_lst (status_list_execution: (bool option) list) : bool =
+  let rec incoherence_in_lst (status_list_execution: (bool option) list) (previous_type: (bool option)): bool =
+  match status_list_execution with
+  | [] -> true
+  | h::t -> if (Option.is_none previous_type && Option.is_none h) ||
+              (Option.is_some previous_type && Option.is_some h && (Option.get previous_type = Option.get h))
+            then incoherence_in_lst t h
+            else false
+  in
+  incoherence_in_lst status_list_execution (List.nth status_list_execution 0)
+
+let rec do_intermediarymandatory (facts: exp_ast list) (query: string) (facts_dict:((string, bool option) Hashtbl.t)) : unit =
+  (* Collect all the trees containing the letter on the right side *)
+  let (tmp_lst:exp_ast list) = find_tree facts query in
+  (* Collect the current status of the letter in the hash_table *)
+  let (status_query_htable: bool option) = Hashtbl.find facts_dict query in
+  (* If the list is empty (meaning no letter on the right), then set status to false, else, if incoherence with previous status -> print error *)
+  if List.length tmp_lst <= 0
+  then 
+    if Option.is_none status_query_htable || Option.get status_query_htable = false
+    then Hashtbl.replace facts_dict query (Some false)
+    else print_string ("An error has been encountered -> Incoherence with the letter " ^ query ^ "\n")
+  (* As the list is not empty, we check wether all the results coincide, otherwise, print error *)
+  else
+    (* Check if we are in an infinite loop (e.g. --> If the rletter type is different than None --> we are in a recursive and set the value to False) *)
+    (* Problem in the logic for the if --> NEED TO FIX IT *)
+    (* if Option.is_some rletter && (Option.get rletter = query) if rletter = letter *)
+    then
+    (*  Case where infinite loop and more than 1 list containing the letter, then send to the next one *)
+      if List.length tmp_lst > 1
+      (* send with new list without current one, so that if we are in an infinite loop configuration, we send the list without the current one to check previous ones *)
+      then do_intermediarymandatory (List.tl tmp_lst) query facts_dict
+      else Hashtbl.replace facts_dict query (Some false)
+    else
+      (* Check the status for all the trees *)
+      let (status_list_execution: (bool option) list) = List.map (fun x -> evaluate_expr x facts_dict facts) tmp_lst in
+      (* Bool that states wether there is an incoherence in between the trees *)
+      let (no_incoherence_in_lst: bool) = check_incoherence_in_lst status_list_execution in
+      (* If there's no incoherence in the list *)
+      if no_incoherence_in_lst = true
+      (* Then set the value to the value of the first element of the list *)
+      then Hashtbl.replace facts_dict query (List.nth status_list_execution 0)
+      else print_string ("An error has been encountered -> Incoherence with the letter " ^ query ^ "\n")
 
 let do_mandatory (facts: exp_ast list) (query: string list) (facts_dict:((string, bool option) Hashtbl.t)): unit =
+  (* First test
+  let _ = print_string "\n\n\nDEBUT DEBUG\n" in
+  (* // À fixer : boucler sur les lettres de la query *)
+  let (debug: exp_ast list list) = List.map (fun x -> find_tree facts x) query in
+  (* Print function for debug *)
+  let _ = List.iter (fun x -> List.iter print_exp_ast x) debug in
+  let _ = print_string "FIN DEBUG\n\n\n" in
   let _ = Hashtbl.iter print_hash facts_dict in
   let _ = Hashtbl.replace facts_dict "W" (Some true) in
   let _ = print_string "\n\n\n" in
   let _ = Hashtbl.iter print_hash facts_dict in
   let _ = print_string "\n\n\n" in
-  let _ = Hashtbl.iter print_hash facts_dict in ()
+  let _ = Hashtbl.iter print_hash facts_dict in () *)
+  List.iter (fun x -> do_intermediarymandatory facts x facts_dict) query
 
 
 
@@ -168,7 +238,7 @@ let _ =
               (* then do_mandatory facts (initialize_facts lst_facts init) *)
               (* HERE WE CHECK THE CORRECTNESS OF THE FILE --> NEED TO PARSE AND CHECK THE RETURN *)
               then let _ = List.iter check_correctness_imply_list facts in
-              let (trees: exp_ast list) = List.map (fun e -> exp_ast_of_list @@ remove_imply e) facts in
+              let (trees: exp_ast list) = List.map (fun e -> exp_ast_of_list_mandatory e) facts in
               let _ = List.map print_exp_ast trees in
               do_mandatory trees (remove_bool_opt query) @@ initialize_mandatory (List.tl init) lst_facts
               else ()

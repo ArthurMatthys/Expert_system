@@ -21,11 +21,11 @@ SRC_DIR = ./src/
 
 SRC_ = \
 		Library.ml \
-		Checker.ml \
-		Lexer.ml \
 		Operation.ml \
 		Btree.ml \
-		ReadFile.ml
+		Lexer.ml \
+		ReadFile.ml \
+		Checker.ml 
 
 # **************************************************************************** #
 #                                  INTERFACES                                  #
@@ -39,11 +39,11 @@ INT_DIR = ./src/
 
 INT_ = \
 		Library.mli \
-		Checker.mli \
-		Lexer.mli \
 		Operation.mli \
 		Btree.mli \
-		ReadFile.mli
+		Lexer.mli \
+		ReadFile.mli \
+		Checker.mli
 
 CMI = $(INT_:%.mli=$(CMI_DIR)%.cmi)
 
