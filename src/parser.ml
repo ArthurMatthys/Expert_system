@@ -136,7 +136,7 @@ let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((stri
         then List.nth status_list_execution 0
         else begin print_string ("An error has been encountered -> Incoherence with the letter " ^ query ^ "\n") ; None end
   in
-  List.iter (fun x -> Hashtbl.replace facts_dict x (rec_mandatory x [])) queries
+  List.iter (fun x -> Hashtbl.replace facts_dict x (rec_mandatory x [])) (List.tl queries)
 
 
 
