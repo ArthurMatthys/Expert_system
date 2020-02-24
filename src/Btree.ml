@@ -97,6 +97,7 @@ let rec exp_ast_of_list_mandatory (facts_list:(string*int)list) : exp_ast =
     | ("^", _) -> Xor (exp_ast_of_list_mandatory left, exp_ast_of_list_mandatory right)
     | ("!", _) -> Not (exp_ast_of_list_mandatory right)
     | _ -> Empty
+
 (* 
 let evaluate_expr (expr : exp_ast) (facts_dict:((string, bool option) Hashtbl.t)): bool option =
   let rec evaluate (tree : exp_ast) : bool option =
@@ -111,30 +112,20 @@ let evaluate_expr (expr : exp_ast) (facts_dict:((string, bool option) Hashtbl.t)
   in
   evaluate expr *)
 
-let pop_element_from_list (element: 'a) (lst: 'a list) : ('a list) =
-  let rec pop_el_from_list (element: 'a) (lst: 'a list) : ('a list) =
-  match lst with
-  | [] -> []
-  | h::t -> if h <> element
-            then h :: pop_el_from_list element t
-            else pop_el_from_list element t
-  in
-  pop_el_from_list element lst
-
 (*
 Cas lettre pas bon, si None rappeler la fonction, si c'est Some, renvoie le Bool 
 Pour éviter les boucles infs, rajouter rlettre en paramètre et si lettre == l, alors false
 *)
-
-let evaluate_expr (expr : exp_ast) (facts_dict:((string, bool option) Hashtbl.t)) (facts: exp_ast list) (rletter: string option): bool option =
+(* 
+let evaluate_expr (expr : exp_ast) (facts_dict:((string, bool option) Hashtbl.t)) (facts: exp_ast list) (rletter: string option) (past_queries: string list): bool option =
   let rec evaluate (tree : exp_ast) : bool option =
     match tree with
     | Empty -> Some false
-    | Letter l -> let status = Hashtbl.find facts_dict l in if Option.is_none status then do_intermediarymandatory (pop_element_from_list tree facts) l facts_dict else status
+    | Letter l -> let status = Hashtbl.find facts_dict l in if Option.is_none status then do_intermediarymandatory  l facts_dict else status
     | And (left, right) -> my_and (evaluate left) (evaluate right)
     | Or (left, right) -> my_or (evaluate left) (evaluate right)
     | Xor (left, right) -> my_xor (evaluate left) (evaluate right)
     | Not (right) -> my_not (evaluate right)
     | _ -> Some false
   in
-  evaluate expr
+  evaluate expr *)
