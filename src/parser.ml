@@ -4,6 +4,7 @@ open Checker
 open Lexer
 open Library
 open ReadFile
+open Operation
 
 let print_err = Printf.eprintf 
 
@@ -95,49 +96,22 @@ let check_incoherence_in_lst (status_list_execution: (bool option) list) : bool 
   in
   incoherence_in_lst status_list_execution (List.nth status_list_execution 0)
 
-(* let rec do_intermediarymandatory (facts: exp_ast list) (query: string) (facts_dict:((string, bool option) Hashtbl.t)) (past_queries: string list): unit =
-  let _ = if List.mem query past_queries
-  then ()
-  else
-    (* Collect all the trees containing the letter on the right side *)
-    let (tmp_lst:exp_ast list) = find_tree facts query in
-    (* Collect the current status of the letter in the hash_table *)
-    let (status_query_htable: bool option) = Hashtbl.find facts_dict query in
-    (* If the list is empty (meaning no letter on the right), then set status to false, else, if incoherence with previous status -> print error *)
-    if List.length tmp_lst <= 0
-    then 
-      if Option.is_none status_query_htable || Option.get status_query_htable = false
-      then Hashtbl.replace facts_dict query (Some false)
-      else print_string ("An error has been encountered -> Incoherence with the letter " ^ query ^ "\n")
-    (* As the list is not empty, we check wether all the results coincide, otherwise, print error *)
-    else
-      (* Check the status for all the trees *)
-      let (status_list_execution: (bool option) list) = List.map (fun x -> evaluate_expr x facts_dict facts (query::past_queries)) tmp_lst in
-      (* Bool that states wether there is an incoherence in between the trees *)
-      let (no_incoherence_in_lst: bool) = check_incoherence_in_lst status_list_execution in
-      (* If there's no incoherence in the list *)
-      if no_incoherence_in_lst = true
-      (* Then set the value to the value of the first element of the list *)
-      then Hashtbl.replace facts_dict query (List.nth status_list_execution 0)
-      else print_string ("An error has been encountered -> Incoherence with the letter " ^ query ^ "\n") *)
 
-(* do_intermediarymandatory ->  *)
+(* Do_mandatory : Solve the mandatory part of the program *)
 let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((string, bool option) Hashtbl.t)): unit =
-  let evaluate_expr (expr : exp_ast) (facts_dict:((string, bool option) Hashtbl.t)) (past_queries: string list): bool option =
-    let rec evaluate (tree : exp_ast) : bool option =
+  let rec evaluate (tree : exp_ast) (past_queries: string list) : bool option =
       match tree with
       | Empty -> Some false
-      | Letter l -> let status = Hashtbl.find facts_dict l in if Option.is_none status then do_intermediarymandatory l facts_dict past_queries else status
-      | And (left, right) -> my_and (evaluate left) (evaluate right)
-      | Or (left, right) -> my_or (evaluate left) (evaluate right)
-      | Xor (left, right) -> my_xor (evaluate left) (evaluate right)
-      | Not (right) -> my_not (evaluate right)
+      | Letter l -> let status = Hashtbl.find facts_dict l in if Option.is_none status then rec_mandatory l past_queries else status
+      | And (left, right) -> my_and (evaluate left past_queries) (evaluate right past_queries)
+      | Or (left, right) -> my_or (evaluate left past_queries) (evaluate right past_queries)
+      | Xor (left, right) -> my_xor (evaluate left past_queries) (evaluate right past_queries)
+      | Not (right) -> my_not (evaluate right past_queries)
       | _ -> Some false
-    in evaluate expr
-  in
-  (* Renvoie un bool qui correspond à la valeur de ma query *)
-  let rec do_intermediarymandatory (query: string) (facts_dict:((string, bool option) Hashtbl.t)) (past_queries: string list): bool option =
-    let _ = if List.mem query past_queries
+  and
+  (* Renvoie un bool option qui correspond à la valeur de ma query *)
+  rec_mandatory (query: string) (past_queries: string list): bool option =
+    if List.mem query past_queries
     then None
     else
       (* Collect all the trees containing the letter on the right side *)
@@ -148,21 +122,21 @@ let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((stri
       if List.length tmp_lst <= 0
       then 
         if Option.is_none status_query_htable || Option.get status_query_htable = false
-        then Hashtbl.replace facts_dict query (Some false)
-        else print_string ("An error has been encountered -> Incoherence with the letter " ^ query ^ "\n")
+        then Some false
+        else begin print_string ("An error has been encountered -> Incoherence with the letter " ^ query ^ "\n") ; None end
       (* As the list is not empty, we check wether all the results coincide, otherwise, print error *)
       else
         (* Check the status for all the trees *)
-        let (status_list_execution: (bool option) list) = List.map (fun x -> evaluate_expr x facts_dict (query::past_queries)) tmp_lst in
+        let (status_list_execution: (bool option) list) = List.map (fun x -> evaluate x (query::past_queries)) tmp_lst in
         (* Bool that states wether there is an incoherence in between the trees *)
         let (no_incoherence_in_lst: bool) = check_incoherence_in_lst status_list_execution in
         (* If there's no incoherence in the list *)
         if no_incoherence_in_lst = true
         (* Then set the value to the value of the first element of the list *)
-        then Hashtbl.replace facts_dict query (List.nth status_list_execution 0)
-        else print_string ("An error has been encountered -> Incoherence with the letter " ^ query ^ "\n")
+        then List.nth status_list_execution 0
+        else begin print_string ("An error has been encountered -> Incoherence with the letter " ^ query ^ "\n") ; None end
   in
-  let _ = List.map (fun x -> do_intermediarymandatory x facts_dict []) queries
+  List.iter (fun x -> Hashtbl.replace facts_dict x (rec_mandatory x [])) queries
 
 
 

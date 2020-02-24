@@ -97,35 +97,3 @@ let rec exp_ast_of_list_mandatory (facts_list:(string*int)list) : exp_ast =
     | ("^", _) -> Xor (exp_ast_of_list_mandatory left, exp_ast_of_list_mandatory right)
     | ("!", _) -> Not (exp_ast_of_list_mandatory right)
     | _ -> Empty
-
-(* 
-let evaluate_expr (expr : exp_ast) (facts_dict:((string, bool option) Hashtbl.t)): bool option =
-  let rec evaluate (tree : exp_ast) : bool option =
-    match tree with
-    | Empty -> Some false
-    | Letter l -> Hashtbl.find facts_dict l
-    | And (left, right) -> my_and (evaluate left) (evaluate right)
-    | Or (left, right) -> my_or (evaluate left) (evaluate right)
-    | Xor (left, right) -> my_xor (evaluate left) (evaluate right)
-    | Not (right) -> my_not (evaluate right)
-    | _ -> Some false
-  in
-  evaluate expr *)
-
-(*
-Cas lettre pas bon, si None rappeler la fonction, si c'est Some, renvoie le Bool 
-Pour éviter les boucles infs, rajouter rlettre en paramètre et si lettre == l, alors false
-*)
-(* 
-let evaluate_expr (expr : exp_ast) (facts_dict:((string, bool option) Hashtbl.t)) (facts: exp_ast list) (rletter: string option) (past_queries: string list): bool option =
-  let rec evaluate (tree : exp_ast) : bool option =
-    match tree with
-    | Empty -> Some false
-    | Letter l -> let status = Hashtbl.find facts_dict l in if Option.is_none status then do_intermediarymandatory  l facts_dict else status
-    | And (left, right) -> my_and (evaluate left) (evaluate right)
-    | Or (left, right) -> my_or (evaluate left) (evaluate right)
-    | Xor (left, right) -> my_xor (evaluate left) (evaluate right)
-    | Not (right) -> my_not (evaluate right)
-    | _ -> Some false
-  in
-  evaluate expr *)
