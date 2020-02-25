@@ -89,13 +89,11 @@ let check_incoherence_in_lst (status_list_execution: (bool option) list) : bool 
   let rec incoherence_in_lst (status_list_execution: (bool option) list) (previous_type: (bool option)): bool =
   match status_list_execution with
   | [] -> true
-  | h::t -> if (Option.is_none previous_type && Option.is_none h) ||
-              (Option.is_some previous_type && Option.is_some h && (Option.get previous_type = Option.get h))
+  | h::t -> if previous_type = h
             then incoherence_in_lst t h
             else false
   in
-  incoherence_in_lst status_list_execution (List.nth status_list_execution 0)
-
+  incoherence_in_lst status_list_execution (List.hd status_list_execution)
 
 (* Do_mandatory : Solve the mandatory part of the program *)
 let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((string, bool option) Hashtbl.t)): unit =
@@ -131,9 +129,9 @@ let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((stri
         (* Bool that states wether there is an incoherence in between the trees *)
         let (no_incoherence_in_lst: bool) = check_incoherence_in_lst status_list_execution in
         (* If there's no incoherence in the list *)
-        if no_incoherence_in_lst = true
+        if no_incoherence_in_lst
         (* Then set the value to the value of the first element of the list *)
-        then List.nth status_list_execution 0
+        then List.hd status_list_execution
         else begin print_string ("An error has been encountered -> Incoherence with the letter " ^ query ^ "\n") ; None end
   in
   List.iter (fun x -> Hashtbl.replace facts_dict x (rec_mandatory x [])) (List.tl queries)
