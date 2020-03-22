@@ -1,6 +1,8 @@
-A + B + C | D => E # A and B and C implies D
-
+A + B + C => E # A and B and C implies D
+C => C
+#B => B
+#!A => B
 =AB # Initial facts : A, B and G are true. All others are false.
 
 
-?D # Queries : What are G, V and X ?
+?CE # Queries : What are G, V and X ?

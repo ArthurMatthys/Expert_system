@@ -84,19 +84,26 @@ let find_tree (tree_lst : exp_ast list) (fact : string) : exp_ast list =
   let (filtered_result: exp_ast list) = List.filter (fun x -> dig_right x) tree_lst in
   filtered_result
 
-(* Tail recursive function that checks wether all elements of the list are the same *)
-let check_incoherence_in_lst (status_list_execution: (bool option) list) : bool =
-  let rec incoherence_in_lst (status_list_execution: (bool option) list) (previous_type: (bool option)): bool =
+(* Tail recursive function that checks wether all elements of the list are the same, and that the*)
+let check_incoherence_in_lst (status_list_execution: (bool option) list) (initial_status: bool option) : bool =
+  let rec incoherence_in_lst (status_list_execution: (bool option) list) (previous_type: (bool option)) : bool =
   match status_list_execution with
   | [] -> true
-  | h::t -> if previous_type = h
-            then incoherence_in_lst t h
+  | h::t -> if previous_type = h && initial_status = Some true && h = initial_status 
+              then incoherence_in_lst t h
+            else if previous_type = h && initial_status = None
+              then incoherence_in_lst t h
             else false
   in
   incoherence_in_lst status_list_execution (List.hd status_list_execution)
 
+(* DEBUG *)
+let int_of_booloption = function None -> 0 | Some false -> 2 | Some true -> 1
+
+let int_of_bool = function false -> 2 | true -> 1
+
 (* Do_mandatory : Solve the mandatory part of the program *)
-let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((string, bool option) Hashtbl.t)): unit =
+let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((string, bool option) Hashtbl.t)) (initial_dict:((string, bool option) Hashtbl.t)): ((string, bool option) Hashtbl.t) =
   let rec evaluate (tree : exp_ast) (past_queries: string list) : bool option =
       match tree with
       | Empty -> Some false
@@ -105,36 +112,67 @@ let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((stri
       | Or (left, right) -> my_or (evaluate left past_queries) (evaluate right past_queries)
       | Xor (left, right) -> my_xor (evaluate left past_queries) (evaluate right past_queries)
       | Not (right) -> my_not (evaluate right past_queries)
+      | Imply (left, right) ->  evaluate left past_queries
       | _ -> Some false
   and
   (* Renvoie un bool option qui correspond à la valeur de ma query *)
   rec_mandatory (query: string) (past_queries: string list): bool option =
-    if List.mem query past_queries
-    then None
+   let _ = Printf.fprintf Stdlib.stdout "DEBUG_REC-MANDATORY\nList.iter\nquery: |%s| Past-queries: " query in 
+   (* let _ = Printf.fprintf Stdlib.stdout "|%s| \n" query in  *)
+   let _ = List.iter (fun x -> Printf.fprintf Stdlib.stdout "|%s| " x)  past_queries in
+   let _ = Printf.fprintf Stdlib.stdout "\n-------DEBUG_PRINTHASTABLE_REC-MANDATORY-------\n" in 
+   let _ = Hashtbl.iter (fun x y -> Printf.fprintf Stdlib.stdout "|%s:%d|-" x (int_of_booloption y)) facts_dict in
+   let _ = Printf.fprintf Stdlib.stdout "\n-------DEBUG_PRINTHASTABLE_REC-MANDATORY-------\n" in 
+    if List.mem query past_queries 
+    (* then Hashtbl.find facts_dict query if the query has already been done, return it's previous value *)
+    (* then begin Printf.fprintf Stdlib.stdout "\n\tNone - rec_mandatory - premier si\n" ; Some false end *)
+    then begin Printf.fprintf Stdlib.stdout "\n\tNone - rec_mandatory - premier si\n" ; None end
     else
+      let _ = Printf.fprintf Stdlib.stdout "\tElse - rec_mandatory - Entrée\n" in
       (* Collect all the trees containing the letter on the right side *)
       let (tmp_lst:exp_ast list) = find_tree facts query in
+      let _ = Printf.fprintf Stdlib.stdout "\tAll trees, containing the letter on the right side:\n\t" in
+      let _ = List.map print_exp_ast tmp_lst in
+      let _ = Printf.fprintf Stdlib.stdout "\n\tLength tmp_lst: %d\n" (List.length tmp_lst) in
       (* Collect the current status of the letter in the hash_table *)
       let (status_query_htable: bool option) = Hashtbl.find facts_dict query in
+      let _ = Printf.fprintf Stdlib.stdout "\tCurrent status letter, hashtable: %d\n" (int_of_booloption status_query_htable) in
       (* If the list is empty (meaning no letter on the right), then set status to false, else, if incoherence with previous status -> print error *)
       if List.length tmp_lst <= 0
       then 
+      begin
+        Printf.fprintf Stdlib.stdout "\t\tList.length <= 0 | entering then ->\n" ;
         if Option.is_none status_query_htable || Option.get status_query_htable = false
-        then Some false
-        else begin print_string ("An error has been encountered -> Incoherence with the letter " ^ query ^ "\n") ; None end
+        then begin Printf.fprintf Stdlib.stdout "\t\tRETURN FALSE||\n" ; Some false end
+        (* else begin Printf.fprintf Stdlib.stdout "\t\tDEBUG_ERROR \n" ; List.iter (fun x -> print_string x)  past_queries; Printf.fprintf Stdlib.stdout "!!!!!!!!!!!An error has been encountered -> Incoherence with the letter [%s] \n" query; None end *)
+        (* else Some true *)
+        else begin Printf.fprintf Stdlib.stdout "\t\tPassé, some true\n" ; Some true end
+      end
       (* As the list is not empty, we check wether all the results coincide, otherwise, print error *)
       else
+        let _ =  Printf.fprintf Stdlib.stdout "\tList.length > 0 | entering else ->\n\tStatus_list_execution: " in
         (* Check the status for all the trees *)
         let (status_list_execution: (bool option) list) = List.map (fun x -> evaluate x (query::past_queries)) tmp_lst in
-        (* Bool that states wether there is an incoherence in between the trees *)
-        let (no_incoherence_in_lst: bool) = check_incoherence_in_lst status_list_execution in
+        let _ = List.iter (fun x -> Printf.fprintf Stdlib.stdout "\tstatus: trees |%d| " (int_of_booloption x)) status_list_execution in
+        (* Bool that states wether there is an incoherence between the trees and the result of the trees and the initial state of trees *)
+        let (no_incoherence_in_lst: bool) = check_incoherence_in_lst status_list_execution (Hashtbl.find initial_dict query) in
+        let _ = Printf.fprintf Stdlib.stdout "\n\tno_incoherence_in_lst : %d\n" (int_of_bool no_incoherence_in_lst) in
         (* If there's no incoherence in the list *)
         if no_incoherence_in_lst
         (* Then set the value to the value of the first element of the list *)
-        then List.hd status_list_execution
-        else begin print_string ("An error has been encountered -> Incoherence with the letter " ^ query ^ "\n") ; None end
+        then 
+        begin
+          Printf.fprintf Stdlib.stdout "\tNo incoherence found in list : %d\n" (int_of_booloption (List.hd status_list_execution));
+          List.hd status_list_execution
+        end
+        else begin print_string ("\t!!!!!!!!!An error oooo has been encountered -> Incoherence with the letter " ^ query ^ "\n") ; None end
   in
-  List.iter (fun x -> Hashtbl.replace facts_dict x (rec_mandatory x [])) (List.tl queries)
+  (* let _ = Printf.printf "DEBUG: \n" in 
+  let _ = Hashtbl.iter (fun x y -> Printf.printf "|%s:%d| " x (int_of_booloption y)) facts_dict in 
+  let _ = Printf.printf "\n" in  *)
+  (* let _ = rec_mandatory "E" [] in *)
+  let _ = List.iter (fun x -> Hashtbl.replace facts_dict x (rec_mandatory x [])) (List.tl queries)
+    in facts_dict
 
 
 
@@ -223,7 +261,11 @@ let _ =
               then let _ = List.iter check_correctness_imply_list facts in
               let (trees: exp_ast list) = List.map (fun e -> exp_ast_of_list_mandatory e) facts in
               let _ = List.map print_exp_ast trees in
-              do_mandatory trees (remove_bool_opt query) @@ initialize_mandatory (List.tl init) lst_facts
+              let dictionnary_ready = initialize_mandatory (List.tl init) lst_facts in
+              let results_hashtable = do_mandatory trees (remove_bool_opt query) dictionnary_ready dictionnary_ready in
+              let _ = Printf.fprintf Stdlib.stdout "DEBUG MAIN\n" in
+               let _ = Hashtbl.iter (fun x y -> Printf.fprintf Stdlib.stdout "|%s:%d|-" x (int_of_booloption y)) results_hashtable in
+                print_string "\n"
               else ()
                 (*
                   let (trees: exp_ast) = unite_facts in
