@@ -56,7 +56,7 @@ let rec exp_ast_of_list_bonus (facts_list:(string*int)list) : exp_ast =
   let rec find_priority_ope (facts_lst:(string*int)list) (index_max: int) (value: int) (index: int): int =
     match facts_lst with
     | [] -> index_max
-    | (h,v)::t -> if v >= 3 && (value = 0 || v <= value) 
+    | (h,v)::t -> if v >= 3 && (value = 0 || (h <> "!" && v <= value) || (h = "!" && v < value ))
                   then find_priority_ope t index v (index + 1)
                   else find_priority_ope t index_max value (index + 1)
   in
@@ -80,7 +80,7 @@ let rec exp_ast_of_list_mandatory (facts_list:(string*int)list) : exp_ast =
   let rec find_priority_ope (facts_lst:(string*int)list) (index_max: int) (value: int) (index: int): int =
     match facts_lst with
     | [] -> index_max
-    | (h,v)::t -> if v >= 3 && (value = 0 || v <= value) 
+    | (h,v)::t -> if v >= 3 && (value = 0 || (h <> "!" && v <= value) || (h = "!" && v < value ))
                   then find_priority_ope t index v (index + 1)
                   else find_priority_ope t index_max value (index + 1)
   in

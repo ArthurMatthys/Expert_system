@@ -34,7 +34,8 @@ let lexer (str:string): ((string*int) list)=
           | ">"::tl -> ("=>", 4) :: lex depth tl
           | _ -> (h, 2) :: lex depth t
           else if List.exists comp conditions
-          then (h, (5 + 4*depth + (index_of conditions h))) :: lex depth t
+          (* then begin Printf.fprintf Stdlib.stdout "debug-lex: |%s|\n" h ; (h, (5 + 4*depth + (index_of conditions h))) :: lex depth t end  *)
+          then (h, (5 + 4*depth + (index_of conditions h))) :: lex depth t 
             else if h = "("
               then (h, 5 + 4*(depth+1)) :: (lex (depth+1) t)
               else if h = ")"
