@@ -135,12 +135,12 @@ let assign_result_to_hashtbl_and_check_error (positive_assign: string list) (sta
     | [] -> Result.ok ()
     (* if status_evaluation == what was before, don't change *)
     | h::t -> if ((Option.is_none (Result.get_ok status_evaluation)) && (Option.is_none (Hashtbl.find facts_dict h))) ||
-                  ((Option.get (Result.get_ok status_evaluation) = false) && ((Option.get (Hashtbl.find facts_dict h) = false)))
-                  || ((Option.get (Result.get_ok status_evaluation) = true) && ((Option.get (Hashtbl.find facts_dict h) = true)))
+                  (((Result.get_ok status_evaluation) = Some false) && ((Hashtbl.find facts_dict h) = Some false))
+                  || (((Result.get_ok status_evaluation) = Some true) && ((Hashtbl.find facts_dict h) = Some true))
                 then assign t
               (* if (status_evaluation == false and before was None) or (status_evaluation == true and before was None) change *)
-              else if ((Option.get (Result.get_ok status_evaluation) = false) && (Option.is_none (Hashtbl.find facts_dict h))) ||
-                      ((Option.get (Result.get_ok status_evaluation) = true) && (Option.is_none (Hashtbl.find facts_dict h)))
+              else if (((Result.get_ok status_evaluation) = Some false) && (Option.is_none (Hashtbl.find facts_dict h))) ||
+                      (((Result.get_ok status_evaluation) = Some true) && (Option.is_none (Hashtbl.find facts_dict h)))
                 then begin Hashtbl.replace current_table h (Result.get_ok status_evaluation) ; assign t end
               else
                 Result.Error("An incoherence for letter " ^ h ^ " has been found")
@@ -186,7 +186,7 @@ let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((stri
     else 
     (* Calculate the inverse of the status, for the negative values *)
       let (neg_status_evaluation:((bool option, string) result)) = if Option.is_none (Result.get_ok status_evaluation) then status_evaluation
-                                                                   else if Option.get (Result.get_ok status_evaluation) = true then Result.ok (Some false)
+                                                                   else if (Result.get_ok status_evaluation) = Some true then Result.ok (Some false)
                                                                    else Result.ok (Some true)
       in
       (* Change status in hashtabl, and check wether error occurs *)
@@ -214,11 +214,11 @@ let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((stri
       if List.length tmp_lst <= 0
       then 
       (* If the value of query in Hastable is None, False and that the value in untouched Hashtable is not true, set to false *)
-        if (Option.is_none status_query_htable || (Option.get status_query_htable = false)) && ((Hashtbl.find facts_dict query) <> Some true)
+        if (Option.is_none status_query_htable || status_query_htable = Some false) && ((Hashtbl.find facts_dict query) <> Some true)
         then begin Hashtbl.replace current_table query (Some false) ; Result.ok current_table end
         else
           (* If the value of query in Hastable is true, and that the value in untouched Hashtable is also true, return this value *)
-          if Option.get (Hashtbl.find facts_dict query) = true && Option.get status_query_htable = true
+          if Hashtbl.find facts_dict query = Some true && status_query_htable = Some true
           then Result.ok current_table
           else Result.Error("An incoherence for letter " ^ query ^ " has been found")
       (* As the list is not empty, we check wether all the results coincide, otherwise, print error *)
