@@ -134,11 +134,15 @@ let int_of_bool = function false -> 2 | true -> 1
 
 (* Do_mandatory : Solve the mandatory part of the program *)
 let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((string, bool option) Hashtbl.t)): ((string, bool option) Hashtbl.t) =
+  (* Function evaluates if no errors are found, otherwise, returns it without evaluating *)
   let rec evaluate (tree : exp_ast) (past_queries: string list) (current_table: ((string, bool option) Hashtbl.t)): ((bool option, string) result) =
       match tree with
       | Empty -> Result.ok (Some false)
       | Letter l -> let status = Hashtbl.find current_table l in if Option.is_none status
-                                                                 then Hashtbl.find (Result.get_ok (rec_mandatory l past_queries current_table)) l
+                                                                 then let ret_mandatory = rec_mandatory l past_queries current_table in
+                                                                      if Result.is_error ret_mandatory
+                                                                      then ret_mandatory
+                                                                      else Hashtbl.find (Result.get_ok ret_mandatory)
                                                                  else status
       | And (left, right) -> my_and (evaluate left past_queries current_table) (evaluate right past_queries current_table)
       | Or (left, right) -> my_or (evaluate left past_queries current_table) (evaluate right past_queries current_table)
@@ -147,29 +151,29 @@ let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((stri
       | Imply (left, right) ->  evaluate left past_queries current_table
       | _ -> Result.ok (Some false)
   and
-  evaluate_trees_hashtbls (tree: exp_ast) (past_queries: string list) (current_table: ((string, bool option) Hashtbl.t)): ((((string, bool option) Hashtbl.t), string) result) =
-    let ((positive_assign, negative_assign):((string list)*(string list))) = split_assignations_on_2_lists tree in
-    let (status_list_execution: (bool option)) = evaluate tree past_queries current_table in
-    let neg_status_list_execution = if Option.is_none status_list_execution
-                                      then status_list_execution
-                                    else if Option.get status_list_execution = true
-                                      then Some false
-                                    else
-                                      Some true
-    in
-    let _ = List.iter (fun x -> Hashtbl.replace current_table x status_list_execution) positive_assign in
-    let _ = List.iter (fun x -> Hashtbl.replace current_table x neg_status_list_execution) negative_assign in
-
-    Result.Ok current_table
-    (* Pour chaque arbre
+  (* Pour chaque arbre
         1. Récupérer les arguments de l'arbre à droite et les placer dans l'une des 2 listes -> Not and normal
         2. Récupérer la valeur pour chaque arbre, et l'ajouter (en négation si nécessaire)
         3. Vérifier la valeur pour chaque Hashtbl
         4. Youpi !!!
     *)
-  (* and
-  intermediary_evaluation (query: string) (past_queries: string list) (current_table: ((string, bool option) Hashtbl.t)): ((string, bool option) Hashtbl.t) =
-  let toto = facts_dict in toto *)
+  evaluate_trees_hashtbls (tree: exp_ast) (past_queries: string list) (current_table: ((string, bool option) Hashtbl.t)): ((((string, bool option) Hashtbl.t), string) result) =
+    let ((positive_assign, negative_assign):((string list)*(string list))) = split_assignations_on_2_lists tree in
+    let (status_evaluation: ((bool option) result)) = evaluate tree past_queries current_table in
+    if Result.is_error status_evaluation
+    then status_evaluation
+    else 
+      let neg_status_evaluation = if Option.is_none (Result.get_ok status_evaluation)
+                                        then status_evaluation
+                                      else if Option.get (Result.get_ok status_evaluation) = true
+                                        then Result.ok (Some false)
+                                      else
+                                        Result.ok (Some true)
+      in
+      (* Remplacer la valeur dans la Hshtabl par celle-ci, et par la même occasion, vérifier si une incohérence est trouvée *)
+      let _ = List.iter (fun x -> Hashtbl.replace current_table x status_list_execution) positive_assign in
+      let _ = List.iter (fun x -> Hashtbl.replace current_table x neg_status_list_execution) negative_assign in
+      Result.Ok current_table
   and
   (* Renvoie un bool option qui correspond à la valeur de ma query *)
   rec_mandatory (query: string) (past_queries: string list) (current_table: ((string, bool option) Hashtbl.t)): ((((string, bool option) Hashtbl.t), string) result) =
