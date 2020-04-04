@@ -66,6 +66,20 @@ let print_hash (key:string) (value:bool option) : unit =
   then let _ = print_endline @@ key ^ " -> None" in ()
   else let _ = print_endline @@ key ^ " -> " ^ (string_of_bool @@ Option.get value) in ()
 
+(* Evaluate function for bonus *)
+ let evaluate_bonus (tree : exp_ast) (index_list: (string*int) list) (actual_nbr:int) : bool =
+    let rec tail_evaluate (tree : exp_ast): bool =
+        match tree with
+        | Empty -> false
+        | Letter l -> let (_, index) = List.find index_list l in (((1 << index) & actual_nbr) > 0)
+        | And (left, right) -> (tail_evaluate left) && (tail_evaluate right)
+        | Or (left, right) -> (tail_evaluate left) || (tail_evaluate right)
+        | Xor (left, right) -> (tail_evaluate left) <> (tail_evaluate right)
+        | Not (right) -> not (tail_evaluate right)
+        | _ -> false
+    in
+    tail_evaluate tree 
+
 (*
   Backward-chaining inference engine
  *)
@@ -343,7 +357,9 @@ let _ =
               (* let _ = Printf.fprintf Stdlib.stdout "DEBUG MAIN\n" in
                let _ = Hashtbl.iter (fun x y -> Printf.fprintf Stdlib.stdout "|%s:%d|-" x (int_of_booloption y)) results_hashtable in *)
                 print_string "\n"
-              else ()
+              else 
+              let tree_bonus = exp_ast_of_list_bonus facts in
+              let _ = print_exp_ast tree_bonus in ()
                 (*
                   let (trees: exp_ast) = unite_facts in
                   let _ = print_exp_ast trees in ()

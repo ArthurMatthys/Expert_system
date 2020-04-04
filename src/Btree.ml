@@ -52,28 +52,34 @@ let _ope_of_string ((ope,_):(string*int)) : (bool option -> bool option -> bool 
   | _ -> (fun _ _ -> None)
 
 (* Celui de la partie bonus *)
-let rec exp_ast_of_list_bonus (facts_list:(string*int)list) : exp_ast = 
-  let rec find_priority_ope (facts_lst:(string*int)list) (index_max: int) (value: int) (index: int): int =
-    match facts_lst with
-    | [] -> index_max
-    | (h,v)::t -> if v >= 3 && (value = 0 || (h <> "!" && v <= value) || (h = "!" && v < value ))
-                  then find_priority_ope t index v (index + 1)
-                  else find_priority_ope t index_max value (index + 1)
+let rec exp_ast_of_list_bonus (facts:((string*int) list) list) : exp_ast =
+  let rec inner_recursion (facts_list:(string*int)list) : exp_ast = 
+    let rec find_priority_ope (facts_lst:(string*int)list) (index_max: int) (value: int) (index: int): int =
+      match facts_lst with
+      | [] -> index_max
+      | (h,v)::t -> if v >= 3 && (value = 0 || (h <> "!" && v <= value) || (h = "!" && v < value ))
+                    then find_priority_ope t index v (index + 1)
+                    else find_priority_ope t index_max value (index + 1)
+    in
+    match facts_list with
+    | [] -> Empty
+    | (h,v)::[] -> Letter h
+    | _ -> let split_index = find_priority_ope facts_list 0 0 0 in
+      let (left:(string*int)list) = remove_parenthesis @@ _filteri (fun index _ -> index < split_index) facts_list in
+      let (right:(string*int)list) = remove_parenthesis @@ _filteri (fun index _ -> index > split_index) facts_list in
+      match List.nth facts_list split_index with
+      | ("<=>", _) -> And (Or (Not (inner_recursion left), inner_recursion right), Or(inner_recursion left, Not (inner_recursion right)))
+      | ("=>", _) -> Or (Not (inner_recursion left), inner_recursion right)
+      | ("+", _) -> And (inner_recursion left, inner_recursion right)
+      | ("|", _) -> Or (inner_recursion left, inner_recursion right)
+      | ("^", _) -> Xor (inner_recursion left, inner_recursion right)
+      | ("!", _) -> Not (inner_recursion right)
+      | _ -> Empty
   in
-  match facts_list with
+  match facts with
   | [] -> Empty
-  | (h,v)::[] -> Letter h
-  | _ -> let split_index = find_priority_ope facts_list 0 0 0 in
-    let (left:(string*int)list) = remove_parenthesis @@ _filteri (fun index _ -> index < split_index) facts_list in
-    let (right:(string*int)list) = remove_parenthesis @@ _filteri (fun index _ -> index > split_index) facts_list in
-    match List.nth facts_list split_index with
-    | ("<=>", _) -> And (Or (Not (exp_ast_of_list_bonus left), exp_ast_of_list_bonus right), Or(exp_ast_of_list_bonus left, Not (exp_ast_of_list_bonus right)))
-    | ("=>", _) -> Or (Not (exp_ast_of_list_bonus left), exp_ast_of_list_bonus right)
-    | ("+", _) -> And (exp_ast_of_list_bonus left, exp_ast_of_list_bonus right)
-    | ("|", _) -> Or (exp_ast_of_list_bonus left, exp_ast_of_list_bonus right)
-    | ("^", _) -> Xor (exp_ast_of_list_bonus left, exp_ast_of_list_bonus right)
-    | ("!", _) -> Not (exp_ast_of_list_bonus right)
-    | _ -> Empty
+  | h::[] -> inner_recursion h
+  | h::t -> And(inner_recursion h, exp_ast_of_list_bonus t)
 
 (* Celui de la partie mandatory *)
 let rec exp_ast_of_list_mandatory (facts_list:(string*int)list) : exp_ast = 
