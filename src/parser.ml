@@ -71,7 +71,7 @@ let print_hash (key:string) (value:bool option) : unit =
     let rec tail_evaluate (tree : exp_ast): bool =
         match tree with
         | Empty -> false
-        | Letter l -> let (_, index) = List.find index_list l in (((1 << index) & actual_nbr) > 0)
+        | Letter l -> let (_, index) = List.find (fun (str, _) -> str = l) index_list in (((1 lsl index) land actual_nbr) > 0)
         | And (left, right) -> (tail_evaluate left) && (tail_evaluate right)
         | Or (left, right) -> (tail_evaluate left) || (tail_evaluate right)
         | Xor (left, right) -> (tail_evaluate left) <> (tail_evaluate right)
@@ -162,9 +162,9 @@ let assign_result_to_hashtbl_and_check_error (positive_assign: string list) (sta
   assign positive_assign
 
 (* DEBUG *)
-let int_of_booloption = function None -> 0 | Some false -> 2 | Some true -> 1
+(* let int_of_booloption = function None -> 0 | Some false -> 2 | Some true -> 1
 
-let int_of_bool = function false -> 2 | true -> 1
+let int_of_bool = function false -> 2 | true -> 1 *)
 
 
 (* Do_mandatory : Solve the mandatory part of the program *)
@@ -258,13 +258,40 @@ let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((stri
   (* let _ = rec_mandatory x [] (Hashtbl.copy facts_dict) in *)
   in List.iter (fun x -> if Result.is_error x
                           then Printf.fprintf Stdlib.stdout "|%s|\n" (Result.get_error x)
-                          else begin Hashtbl.iter (fun x y -> Printf.fprintf Stdlib.stdout "|%s:%d|-" x (int_of_booloption y)) (Result.get_ok x) ; 
+                          else begin Hashtbl.iter (fun x y -> Printf.fprintf Stdlib.stdout "|%s:%s|-" x (string_of_bool_option y)) (Result.get_ok x) ; 
                           Printf.fprintf Stdlib.stdout "\n" end ) ret
 
 
+(* Function that constructs the wanted number for bonus evaluation with bitwise operators *)
+let rec add (init:int) (max:int) : int = 
+if init = (max - 1) 
+then (1 lsl init)
+else (1 lsl init) + (add (init + 1) max)
 
-let do_bonus (facts:(string*int) list list) (facts_dict:((string, bool option) Hashtbl.t)): unit = ()
+let do_bonus (tree:Btree.exp_ast) (tupled_facts:(string * int) list) ((list_none,list_true,tupled_facts):((string*bool option)list)*((string*bool option)list)*((string * int) list)) (facts_dict:((string, bool option) Hashtbl.t)): unit = 
+(* (((list_none:(string*bool option)list),(list_true:(string*bool option)list)) *)
+(* let nbr_true = List.length list_true in *)
+let (upper_limit:int) = List.length tupled_facts in 
+let (nbr_init:int) = add (List.length list_none) upper_limit in
+let (nbr_max:int) = add 0 upper_limit in
+let _ = Printf.fprintf Stdlib.stdout "DEBUG-INTS: nbr_init: %d-nbr_max: %d\n" nbr_init nbr_max in ()
 
+(* Transform the dict into a key-index tuple list *)
+let dict_to_tuplelist (dict:(string, bool option) Hashtbl.t) : (((string*bool option)list)*((string*bool option)list)*((string*int)list)) = 
+  (* Filter hashtable with elemens whose Bool Option value is None *)
+  let (list_none: (string*bool option)list) = Hashtbl.fold (fun k v acc -> if v = None then (k, v) :: acc else acc) dict [] in
+  (* let _ = Printf.fprintf Stdlib.stdout "DEBUG list_none\n" in
+  let _ = List.iter (fun (str,ind) -> Printf.fprintf Stdlib.stdout "|%s:%s" str (string_of_bool_option ind)) list_none in
+  let _ = Printf.fprintf Stdlib.stdout "\n" in *)
+  (* Filter hashtable with elemens whose Bool Option value is Some true *)
+  let (list_true: (string*bool option)list) = Hashtbl.fold (fun k v acc -> if v = Some true then (k, v) :: acc else acc) dict [] in
+  (* let _ = Printf.fprintf Stdlib.stdout "DEBUG list_true\n" in
+  let _ = List.iter (fun (str,ind) -> Printf.fprintf Stdlib.stdout "|%s:%s" str (string_of_bool_option ind)) list_true in
+  let _ = Printf.fprintf Stdlib.stdout "\n" in *)
+  (* Get length list_none, to add in index *)
+  let (nbr: int) = List.length list_none in
+  (* Create the tuple, with at last the list of key-index elements *)
+  (list_none, list_true, (List.append (List.mapi (fun ind (string,bool) -> (string, ind)) list_none) (List.mapi (fun ind (string,bool) -> (string, ind + nbr)) list_true)))
 
 let initialize_facts (lst_facts: (string*(bool option)) list) (init: (string*int) list) : (string, bool option) Hashtbl.t =
   let m = Hashtbl.create 26 in m
@@ -358,8 +385,16 @@ let _ =
                let _ = Hashtbl.iter (fun x y -> Printf.fprintf Stdlib.stdout "|%s:%d|-" x (int_of_booloption y)) results_hashtable in *)
                 print_string "\n"
               else 
-              let tree_bonus = exp_ast_of_list_bonus facts in
-              let _ = print_exp_ast tree_bonus in ()
+              (* Construct the tree of the bonus *)
+              let (tree_bonus:Btree.exp_ast) = exp_ast_of_list_bonus facts in
+              let _ = print_exp_ast tree_bonus in
+              (* Construct a tuple list of all the facts [used later for decoding of bites]  *)
+              let ((list_none:(string*bool option)list),(list_true:(string*bool option)list),(tupled_facts:(string * int) list)) = dict_to_tuplelist @@ initialize_mandatory (List.tl init) lst_facts in
+              let _ = Printf.fprintf Stdlib.stdout "DEBUG TUPLELIST \n" in
+              let _ = List.iter (fun (str,ind) -> Printf.fprintf Stdlib.stdout "|%s:%d" str ind) tupled_facts in
+              (* Do bonus execution *)
+              let _ = do_bonus tree_bonus tupled_facts (list_none,list_true,tupled_facts) @@ initialize_mandatory (List.tl init) lst_facts
+              in ()
                 (*
                   let (trees: exp_ast) = unite_facts in
                   let _ = print_exp_ast trees in ()
