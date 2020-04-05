@@ -309,7 +309,7 @@ let do_bonus (tree:exp_ast) ((list_none,list_true,tupled_facts):((string*bool op
                             | _ -> Some (bitcompare_int ret)
     in List.iter (fun x ->
       match Hashtbl.find facts_dict x with
-      | Some true -> Printf.fprintf Stdlib.stdout "%s : True\n" x
+      | Some true -> Printf.fprintf Stdlib.stdout "%s : true\n" x
       | _ -> match verdict_int with
             | None -> Printf.fprintf Stdlib.stdout "%s : None\n" x
             | Some (_) -> let (_, index_letter) = List.find (fun (str, _) -> str = x) tupled_facts in
@@ -317,7 +317,7 @@ let do_bonus (tree:exp_ast) ((list_none,list_true,tupled_facts):((string*bool op
                    | true -> Printf.fprintf Stdlib.stdout "%s : %s\n" x (string_of_bool (retrieve_bite_value index_letter (List.hd ret)))
                    | false -> Printf.fprintf Stdlib.stdout "%s : None\n" x
 
-      ) queries
+      ) (List.tl queries)
 
 (* Transform the dict into a key-index tuple list *)
 let dict_to_tuplelist (dict:(string, bool option) Hashtbl.t) : (((string*bool option)list)*((string*bool option)list)*((string*int)list)) = 
