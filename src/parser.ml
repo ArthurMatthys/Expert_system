@@ -248,7 +248,10 @@ let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((stri
                           Printf.fprintf Stdlib.stdout "\n" end ) ret
 
 
-(* Evaluate function for bonus *)
+(*
+  * Evaluate function for bonus :
+  * Retrieves a bool, and checks the value of the letter bitwisely
+*)
  let evaluate_bonus (tree : exp_ast) (index_list: (string*int) list) (actual_nbr:int) : bool =
     let rec tail_evaluate (tree : exp_ast): bool =
         match tree with
@@ -264,10 +267,11 @@ let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((stri
 
 (* Function that constructs the wanted number for bonus evaluation with bitwise operators *)
 let rec add (init:int) (max:int) : int = 
-if init = (max - 1) 
-then (1 lsl init)
-else (1 lsl init) + (add (init + 1) max)
+  if init = (max - 1) 
+  then (1 lsl init)
+  else (1 lsl init) + (add (init + 1) max)
 
+(* Create the list of ints satisfying the equation *)
 let get_lst (tree:exp_ast) (tupled_facts:(string * int) list) (nbr_init: int) (nbr_max:int) : (int list) = 
   let rec get_lst_rec (nbr:int) = 
     if nbr > nbr_max
@@ -279,16 +283,41 @@ let get_lst (tree:exp_ast) (tupled_facts:(string * int) list) (nbr_init: int) (n
   in
   get_lst_rec nbr_init
 
-let do_bonus (tree:exp_ast) (tupled_facts:(string * int) list) ((list_none,list_true,tupled_facts):((string*bool option)list)*((string*bool option)list)*((string * int) list)) (facts_dict:((string, bool option) Hashtbl.t)): unit = 
-(* (((list_none:(string*bool option)list),(list_true:(string*bool option)list)) *)
-(* let nbr_true = List.length list_true in *)
-let (upper_limit:int) = List.length tupled_facts in 
-let (nbr_init:int) = add (List.length list_none) upper_limit in
-let (nbr_max:int) = add 0 upper_limit in
-let _ = Printf.fprintf Stdlib.stdout "\nDEBUG-INTS: nbr_init: %d-nbr_max: %d\n" nbr_init nbr_max in 
-let ret = get_lst tree tupled_facts nbr_init nbr_max in
-let _ = List.iter (fun x -> Printf.fprintf Stdlib.stdout "DEBUG-ret: |%d|\n" x) ret
-in ()
+(* Compare bitwisely the ints *)
+let bitcompare_int (int_lst: int list) : int =
+  let rec bit_compare (int_lst: int list) (first_el:int) : int =
+    match int_lst with
+    | [] -> first_el
+    | h::[] -> first_el
+    | h::t -> bit_compare t (lnot (h lxor first_el))
+  in bit_compare (List.tl int_lst) (List.hd int_lst)
+
+let retrieve_bite_value (index_letter:int) (actual_nbr:int) : bool =
+  (((1 lsl index_letter) land actual_nbr) > 0)
+
+let do_bonus (tree:exp_ast) ((list_none,list_true,tupled_facts):((string*bool option)list)*((string*bool option)list)*((string * int) list))
+  (queries: string list) (facts_dict:((string, bool option) Hashtbl.t)): unit =
+    let (upper_limit:int) = List.length tupled_facts in 
+    let (nbr_init:int) = add (List.length list_none) upper_limit in
+    let (nbr_max:int) = add 0 upper_limit in
+    let _ = Printf.fprintf Stdlib.stdout "\nDEBUG-INTS: nbr_init: %d-nbr_max: %d\n" nbr_init nbr_max in 
+    let (ret:int list) = get_lst tree tupled_facts nbr_init nbr_max in
+    let _ = List.iter (fun x -> Printf.fprintf Stdlib.stdout "DEBUG-ret: |%d|\n" x) ret in
+    let (verdict_int:int option) = match List.length ret with
+                            | 0 -> None
+                            | 1 -> Some (List.hd ret)
+                            | _ -> Some (bitcompare_int ret)
+    in List.iter (fun x ->
+      match Hashtbl.find facts_dict x with
+      | Some true -> Printf.fprintf Stdlib.stdout "%s : True\n" x
+      | _ -> match verdict_int with
+            | None -> Printf.fprintf Stdlib.stdout "%s : None\n" x
+            | Some (_) -> let (_, index_letter) = List.find (fun (str, _) -> str = x) tupled_facts in
+                   match (retrieve_bite_value index_letter (Option.get verdict_int)) with
+                   | true -> Printf.fprintf Stdlib.stdout "%s : %s\n" x (string_of_bool (retrieve_bite_value index_letter (List.hd ret)))
+                   | false -> Printf.fprintf Stdlib.stdout "%s : None\n" x
+
+      ) queries
 
 (* Transform the dict into a key-index tuple list *)
 let dict_to_tuplelist (dict:(string, bool option) Hashtbl.t) : (((string*bool option)list)*((string*bool option)list)*((string*int)list)) = 
@@ -407,7 +436,7 @@ let _ =
               let _ = Printf.fprintf Stdlib.stdout "DEBUG TUPLELIST \n" in
               let _ = List.iter (fun (str,ind) -> Printf.fprintf Stdlib.stdout "|%s:%d" str ind) tupled_facts in
               (* Do bonus execution *)
-              let _ = do_bonus tree_bonus tupled_facts (list_none,list_true,tupled_facts) @@ initialize_mandatory (List.tl init) lst_facts
+              let _ = do_bonus tree_bonus (list_none,list_true,tupled_facts) (remove_bool_opt query) @@ initialize_mandatory (List.tl init) lst_facts
               in ()
                 (*
                   let (trees: exp_ast) = unite_facts in
