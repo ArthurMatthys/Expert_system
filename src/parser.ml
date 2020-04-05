@@ -148,9 +148,9 @@ let assign_result_to_hashtbl_and_check_error (positive_assign: string list) (sta
   assign positive_assign
 
 (* DEBUG *)
-(* let int_of_booloption = function None -> 0 | Some false -> 2 | Some true -> 1
+ let int_of_intoption = function None -> -1 | Some x -> x
 
-let int_of_bool = function false -> 2 | true -> 1 *)
+(* let int_of_bool = function false -> 2 | true -> 1 *)
 
 
 (* Do_mandatory : Solve the mandatory part of the program *)
@@ -284,22 +284,45 @@ let get_lst (tree:exp_ast) (tupled_facts:(string * int) list) (nbr_init: int) (n
   get_lst_rec nbr_init
 
 (* Compare bitwisely the ints *)
-let bitcompare_int (int_lst: int list) : int =
-  let rec bit_compare (int_lst: int list) (first_el:int) : int =
+(* let bitcompare_int (int_lst: int list) : int =
+  let int_ref = List.hd int_lst in
+    let rec bit_compare (int_lst: int list) (coherent:int) : int =
+      match int_lst with
+      | [] -> coherent
+      | h::[] -> (lnot (h lxor int_ref)) land coherent
+      | h::t -> let simil = lnot (h lxor int_ref) in
+                let cohe_tmp = simil land coherent in
+                let _ = Printf.fprintf Stdlib.stdout "simil : %d\n" simil in
+                let _ = Printf.fprintf Stdlib.stdout "cohe_tmp : %d\n" cohe_tmp in
+                bit_compare t cohe_tmp
+    in bit_compare (List.tl int_lst) int_ref *)
+
+let bitcompare_int (int_lst : int list) : int =
+  let int_ref = List.hd int_lst in
+  let rec bit_compare (int_lst: int list) (coherent:int) : int =
     match int_lst with
-    | [] -> first_el
-    | h::[] -> first_el
-    | h::t -> bit_compare t (lnot (h lxor first_el))
-  in bit_compare (List.tl int_lst) (List.hd int_lst)
+    | [] -> coherent
+    | h::[] -> (lnot (h lxor int_ref)) land coherent
+    | h::t -> let simil = lnot (h lxor int_ref) in
+              let cohe_tmp = simil land coherent in
+              let _ = Printf.fprintf Stdlib.stdout "simil : %d\n" simil in
+              let _ = Printf.fprintf Stdlib.stdout "cohe_tmp : %d\n" cohe_tmp in
+              bit_compare t cohe_tmp
+  in match int_lst with
+    | [] -> -1
+    | h::[] -> h
+    | h1::h2::[] -> lnot(h1 lxor h2)
+    | h1::h2::t -> bit_compare t (lnot(h1 lxor h2)) 
 
 let retrieve_bite_value (index_letter:int) (actual_nbr:int) : bool =
   (((1 lsl index_letter) land actual_nbr) > 0)
 
 let do_bonus (tree:exp_ast) ((list_none,list_true,tupled_facts):((string*bool option)list)*((string*bool option)list)*((string * int) list))
   (queries: string list) (facts_dict:((string, bool option) Hashtbl.t)): unit =
-    let (upper_limit:int) = List.length tupled_facts in 
-    let (nbr_init:int) = add (List.length list_none) upper_limit in
-    let (nbr_max:int) = add 0 upper_limit in
+    let (bit_max:int) = List.length tupled_facts in 
+    (* Dans l'input, voir si incohérence dans le truc *)
+    let (nbr_init:int) = add (List.length list_none) bit_max in
+    let (nbr_max:int) = add 0 bit_max in
     let _ = Printf.fprintf Stdlib.stdout "\nDEBUG-INTS: nbr_init: %d-nbr_max: %d\n" nbr_init nbr_max in 
     let (ret:int list) = get_lst tree tupled_facts nbr_init nbr_max in
     let _ = List.iter (fun x -> Printf.fprintf Stdlib.stdout "DEBUG-ret: |%d|\n" x) ret in
@@ -307,6 +330,7 @@ let do_bonus (tree:exp_ast) ((list_none,list_true,tupled_facts):((string*bool op
                             | 0 -> None
                             | 1 -> Some (List.hd ret)
                             | _ -> Some (bitcompare_int ret)
+    in let _ = Printf.fprintf Stdlib.stdout "DEBUG VERDICT %d\n" (int_of_intoption verdict_int)
     in List.iter (fun x ->
       match Hashtbl.find facts_dict x with
       | Some true -> Printf.fprintf Stdlib.stdout "%s : true\n" x
