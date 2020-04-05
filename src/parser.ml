@@ -66,20 +66,6 @@ let print_hash (key:string) (value:bool option) : unit =
   then let _ = print_endline @@ key ^ " -> None" in ()
   else let _ = print_endline @@ key ^ " -> " ^ (string_of_bool @@ Option.get value) in ()
 
-(* Evaluate function for bonus *)
- let evaluate_bonus (tree : exp_ast) (index_list: (string*int) list) (actual_nbr:int) : bool =
-    let rec tail_evaluate (tree : exp_ast): bool =
-        match tree with
-        | Empty -> false
-        | Letter l -> let (_, index) = List.find (fun (str, _) -> str = l) index_list in (((1 lsl index) land actual_nbr) > 0)
-        | And (left, right) -> (tail_evaluate left) && (tail_evaluate right)
-        | Or (left, right) -> (tail_evaluate left) || (tail_evaluate right)
-        | Xor (left, right) -> (tail_evaluate left) <> (tail_evaluate right)
-        | Not (right) -> not (tail_evaluate right)
-        | _ -> false
-    in
-    tail_evaluate tree 
-
 (*
   Backward-chaining inference engine
  *)
@@ -262,19 +248,47 @@ let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((stri
                           Printf.fprintf Stdlib.stdout "\n" end ) ret
 
 
+(* Evaluate function for bonus *)
+ let evaluate_bonus (tree : exp_ast) (index_list: (string*int) list) (actual_nbr:int) : bool =
+    let rec tail_evaluate (tree : exp_ast): bool =
+        match tree with
+        | Empty -> false
+        | Letter l -> let (_, index) = List.find (fun (str, _) -> str = l) index_list in (((1 lsl index) land actual_nbr) > 0)
+        | And (left, right) -> (tail_evaluate left) && (tail_evaluate right)
+        | Or (left, right) -> (tail_evaluate left) || (tail_evaluate right)
+        | Xor (left, right) -> (tail_evaluate left) <> (tail_evaluate right)
+        | Not (right) -> not (tail_evaluate right)
+        | _ -> false
+    in
+    tail_evaluate tree 
+
 (* Function that constructs the wanted number for bonus evaluation with bitwise operators *)
 let rec add (init:int) (max:int) : int = 
 if init = (max - 1) 
 then (1 lsl init)
 else (1 lsl init) + (add (init + 1) max)
 
-let do_bonus (tree:Btree.exp_ast) (tupled_facts:(string * int) list) ((list_none,list_true,tupled_facts):((string*bool option)list)*((string*bool option)list)*((string * int) list)) (facts_dict:((string, bool option) Hashtbl.t)): unit = 
+let get_lst (tree:exp_ast) (tupled_facts:(string * int) list) (nbr_init: int) (nbr_max:int) : (int list) = 
+  let rec get_lst_rec (nbr:int) = 
+    if nbr > nbr_max
+    then []
+    else
+      if evaluate_bonus tree tupled_facts nbr
+      then nbr :: get_lst_rec (nbr+1)
+      else get_lst_rec (nbr+1)
+  in
+  get_lst_rec nbr_init
+
+let do_bonus (tree:exp_ast) (tupled_facts:(string * int) list) ((list_none,list_true,tupled_facts):((string*bool option)list)*((string*bool option)list)*((string * int) list)) (facts_dict:((string, bool option) Hashtbl.t)): unit = 
 (* (((list_none:(string*bool option)list),(list_true:(string*bool option)list)) *)
 (* let nbr_true = List.length list_true in *)
 let (upper_limit:int) = List.length tupled_facts in 
 let (nbr_init:int) = add (List.length list_none) upper_limit in
 let (nbr_max:int) = add 0 upper_limit in
-let _ = Printf.fprintf Stdlib.stdout "DEBUG-INTS: nbr_init: %d-nbr_max: %d\n" nbr_init nbr_max in ()
+let _ = Printf.fprintf Stdlib.stdout "\nDEBUG-INTS: nbr_init: %d-nbr_max: %d\n" nbr_init nbr_max in 
+let ret = get_lst tree tupled_facts nbr_init nbr_max in
+let _ = List.iter (fun x -> Printf.fprintf Stdlib.stdout "DEBUG-ret: |%d|\n" x) ret
+in ()
 
 (* Transform the dict into a key-index tuple list *)
 let dict_to_tuplelist (dict:(string, bool option) Hashtbl.t) : (((string*bool option)list)*((string*bool option)list)*((string*int)list)) = 
@@ -386,7 +400,7 @@ let _ =
                 print_string "\n"
               else 
               (* Construct the tree of the bonus *)
-              let (tree_bonus:Btree.exp_ast) = exp_ast_of_list_bonus facts in
+              let (tree_bonus:exp_ast) = exp_ast_of_list_bonus facts in
               let _ = print_exp_ast tree_bonus in
               (* Construct a tuple list of all the facts [used later for decoding of bites]  *)
               let ((list_none:(string*bool option)list),(list_true:(string*bool option)list),(tupled_facts:(string * int) list)) = dict_to_tuplelist @@ initialize_mandatory (List.tl init) lst_facts in
