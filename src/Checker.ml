@@ -10,9 +10,7 @@ let rec _check_mandatory (line:(string*int) list) (left:bool) (imply:int) (right
       else if not left
         then Result.Error ("No left part")
         else Result.Error ("No right part")
-  | ("<=>",_)::t -> if imply = 0 
-    then _check_mandatory t left 4 right
-    else Result.Error ("Multiple implications found")
+  | ("<=>",_)::t -> Result.Error ("<=> is not handled in mandatory part") 
   | ("=>", _)::t -> if imply = 0 
     then _check_mandatory t left 3 right
     else Result.Error ("Multiple implications found")
@@ -80,7 +78,7 @@ let rec _check_bonus (line:(string*int) list) (content:bool) (imply:int) : ((int
   | ("?", _)::t -> if imply <> 0 || content
     then Result.Error ("Question mark found but wrongly placed")
     else _check_bonus t content 2
-  | (h1,v1)::(h2,v2)::t -> if v1 = v2 && imply <> 1 && imply <> 2
+  | (h1,v1)::(h2,v2)::t -> if (v1 = v2 && h2 <> "!") && imply <> 1 && imply <> 2
     then Result.Error ("Two characters with same type found : \"" ^ h1 ^ "\" and\"" ^ h2 ^ "\"")
     else if v1 < 0
       then Result.Error ("Character not valid : \"" ^ h1 ^ "\"")

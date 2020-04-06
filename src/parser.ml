@@ -128,22 +128,20 @@ let check_incoherence_in_lst (status_list_execution: (((((string, bool option) H
   incoherence_in_lst status_list_execution (List.hd status_list_execution)
 
 (* Tail recursive function that changes the value of the current_table, and checks at the same time any error*)
-let assign_result_to_hashtbl_and_check_error (positive_assign: string list) (status_evaluation: ((bool option, string) result))
+let assign_result_to_hashtbl_and_check_error (positive_assign: string list) (status_evaluation: (bool option))
   (current_table: ((string, bool option) Hashtbl.t)) (facts_dict:((string, bool option) Hashtbl.t)): ((unit, string) result) =
   let rec assign (positive_assign: string list) : ((unit, string) result) =
     match positive_assign with
     | [] -> Result.ok ()
     (* if status_evaluation == what was before, don't change *)
-    | h::t -> if ((Option.is_none (Result.get_ok status_evaluation)) && (Option.is_none (Hashtbl.find facts_dict h))) ||
-                  (((Result.get_ok status_evaluation) = Some false) && ((Hashtbl.find facts_dict h) = Some false))
-                  || (((Result.get_ok status_evaluation) = Some true) && ((Hashtbl.find facts_dict h) = Some true))
+    | h::t -> let value = Hashtbl.find facts_dict h in
+                if (status_evaluation = value)
                 then assign t
-              (* if (status_evaluation == false and before was None) or (status_evaluation == true and before was None) change *)
-              else if (((Result.get_ok status_evaluation) = Some false) && (Option.is_none (Hashtbl.find facts_dict h))) ||
-                      (((Result.get_ok status_evaluation) = Some true) && (Option.is_none (Hashtbl.find facts_dict h)))
-                then begin Hashtbl.replace current_table h (Result.get_ok status_evaluation) ; assign t end
-              else
-                Result.Error("An incoherence for letter " ^ h ^ " has been found")
+                (* if (status_evaluation == false and before was None) or (status_evaluation == true and before was None) change *)
+                else if Option.is_none value && (not @@ Option.is_none status_evaluation)
+                  then begin Hashtbl.replace current_table h status_evaluation ; assign t end
+                else
+                  Result.Error("An incoherence for letter " ^ h ^ " has been found")
   in 
   assign positive_assign
 
@@ -190,8 +188,8 @@ let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((stri
                                                                    else Result.ok (Some true)
       in
       (* Change status in hashtabl, and check wether error occurs *)
-      let (modified_hshtable_positive: ((unit, string) result)) = assign_result_to_hashtbl_and_check_error positive_assign status_evaluation current_table facts_dict in
-      let (modified_hshtable_negative: ((unit, string) result)) = assign_result_to_hashtbl_and_check_error negative_assign neg_status_evaluation current_table facts_dict in
+      let (modified_hshtable_positive: ((unit, string) result)) = assign_result_to_hashtbl_and_check_error positive_assign (Result.get_ok status_evaluation) current_table facts_dict in
+      let (modified_hshtable_negative: ((unit, string) result)) = assign_result_to_hashtbl_and_check_error negative_assign (Result.get_ok neg_status_evaluation) current_table facts_dict in
       (* Check if error is found in change of hashtable, if not, return it *)
       if Result.is_error modified_hshtable_positive
       then Result.Error (Result.get_error modified_hshtable_positive)
@@ -211,32 +209,30 @@ let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((stri
       (* Collect the current status of the letter in the hash_table *)
       let (status_query_htable: bool option) = Hashtbl.find current_table query in
       (* If the list is empty (meaning no letter on the right), then set status to false, else, if incoherence with previous status -> print error *)
-      if List.length tmp_lst <= 0
-      then 
+      match List.length tmp_lst with
       (* If the value of query in Hastable is None, False and that the value in untouched Hashtable is not true, set to false *)
-        if (Option.is_none status_query_htable || status_query_htable = Some false) && ((Hashtbl.find facts_dict query) <> Some true)
-        then begin Hashtbl.replace current_table query (Some false) ; Result.ok current_table end
-        else
-          (* If the value of query in Hastable is true, and that the value in untouched Hashtable is also true, return this value *)
-          if Hashtbl.find facts_dict query = Some true && status_query_htable = Some true
-          then Result.ok current_table
-          else Result.Error("An incoherence for letter " ^ query ^ " has been found")
+      | 0 ->  if (Option.is_none status_query_htable || status_query_htable = Some false) && ((Hashtbl.find facts_dict query) <> Some true)
+              then begin Hashtbl.replace current_table query (Some false) ; Result.ok current_table end
+              else
+                (* If the value of query in Hastable is true, and that the value in untouched Hashtable is also true, return this value *)
+                if Hashtbl.find facts_dict query = Some true && status_query_htable = Some true
+                then Result.ok current_table
+                else Result.Error("An incoherence for letter " ^ query ^ " has been found")
       (* As the list is not empty, we check wether all the results coincide, otherwise, print error *)
-      else
-        (* Evaluate each tree and retrieve *)
-        let (all_hashtables: ((((string, bool option) Hashtbl.t), string) result) list) = List.map (fun x -> evaluate_trees_hashtbls x (query::past_queries) (Hashtbl.copy current_table)) tmp_lst in
-        (* Check wether there is an error *)
-        let (error_is_present: ((((string, bool option) Hashtbl.t), string) result) list) = List.filter(fun x -> Result.is_error x) all_hashtables in
-        if List.length error_is_present > 0
-        then List.hd error_is_present
-        else
-          (* Bool that states wether there is an incoherence between the trees and the result of the trees and the initial state of trees *)
-          let (no_incoherence_in_lst: ((bool, string) result)) = check_incoherence_in_lst all_hashtables query in
-          if Result.is_error no_incoherence_in_lst
-          then Result.Error (Result.get_error no_incoherence_in_lst)
-          else
-            let _ = Hashtbl.replace current_table query (Hashtbl.find (Result.get_ok (List.hd all_hashtables)) query)
-            in Result.ok current_table
+              (* Evaluate each tree and retrieve *)
+      | _ ->  let (all_hashtables: ((((string, bool option) Hashtbl.t), string) result) list) = List.map (fun x -> evaluate_trees_hashtbls x (query::past_queries) (Hashtbl.copy current_table)) tmp_lst in
+              (* Check wether there is an error *)
+              let (error_is_present: ((((string, bool option) Hashtbl.t), string) result) list) = List.filter(fun x -> Result.is_error x) all_hashtables in
+              if List.length error_is_present > 0
+              then List.hd error_is_present
+              else
+                (* Bool that states wether there is an incoherence between the trees and the result of the trees and the initial state of trees *)
+                let (no_incoherence_in_lst: ((bool, string) result)) = check_incoherence_in_lst all_hashtables query in
+                if Result.is_error no_incoherence_in_lst
+                then Result.Error (Result.get_error no_incoherence_in_lst)
+                else
+                  let _ = Hashtbl.replace current_table query (Hashtbl.find (Result.get_ok (List.hd all_hashtables)) query)
+                  in Result.ok current_table
   in
   let (copy_dict:((string, bool option) Hashtbl.t)) = (Hashtbl.copy facts_dict) in
   (* let _ = List.map (fun x -> rec_mandatory x [] (Hashtbl.copy facts_dict)) (List.tl queries)  *)
@@ -297,13 +293,13 @@ let get_lst (tree:exp_ast) (tupled_facts:(string * int) list) (nbr_init: int) (n
                 bit_compare t cohe_tmp
     in bit_compare (List.tl int_lst) int_ref *)
 
-let bitcompare_int (int_lst : int list) : int =
+let bitcompare_int (int_lst : int list) (nbr_max:int) : int =
   let int_ref = List.hd int_lst in
   let rec bit_compare (int_lst: int list) (coherent:int) : int =
     match int_lst with
     | [] -> coherent
-    | h::[] -> (lnot (h lxor int_ref)) land coherent
-    | h::t -> let simil = lnot (h lxor int_ref) in
+    | h::[] -> ((lnot (h lxor int_ref)) land nbr_max) land coherent
+    | h::t -> let simil = (lnot (h lxor int_ref)) land nbr_max in
               let cohe_tmp = simil land coherent in
               let _ = Printf.fprintf Stdlib.stdout "simil : %d\n" simil in
               let _ = Printf.fprintf Stdlib.stdout "cohe_tmp : %d\n" cohe_tmp in
@@ -311,8 +307,8 @@ let bitcompare_int (int_lst : int list) : int =
   in match int_lst with
     | [] -> -1
     | h::[] -> h
-    | h1::h2::[] -> lnot(h1 lxor h2)
-    | h1::h2::t -> bit_compare t (lnot(h1 lxor h2)) 
+    | h1::h2::[] -> (lnot(h1 lxor h2)) land nbr_max
+    | h1::h2::t -> bit_compare t ((lnot(h1 lxor h2)) land nbr_max)
 
 let retrieve_bite_value (index_letter:int) (actual_nbr:int) : bool =
   (((1 lsl index_letter) land actual_nbr) > 0)
@@ -329,7 +325,7 @@ let do_bonus (tree:exp_ast) ((list_none,list_true,tupled_facts):((string*bool op
     let (verdict_int:int option) = match List.length ret with
                             | 0 -> None
                             | 1 -> Some (List.hd ret)
-                            | _ -> Some (bitcompare_int ret)
+                            | _ -> Some (bitcompare_int ret nbr_max)
     in let _ = Printf.fprintf Stdlib.stdout "DEBUG VERDICT %d\n" (int_of_intoption verdict_int)
     in List.iter (fun x ->
       match Hashtbl.find facts_dict x with
@@ -453,10 +449,16 @@ let _ =
                 print_string "\n"
               else 
               (* Construct the tree of the bonus *)
-              let (tree_bonus:exp_ast) = exp_ast_of_list_bonus facts in
+              let _ = Printf.fprintf Stdlib.stdout "1\n" in
+              let (tree_bonus:exp_ast) = exp_ast_of_list_bonus facts in              
+              let _ = Printf.fprintf Stdlib.stdout "2\n" in
+
+
               let _ = print_exp_ast tree_bonus in
               (* Construct a tuple list of all the facts [used later for decoding of bites]  *)
               let ((list_none:(string*bool option)list),(list_true:(string*bool option)list),(tupled_facts:(string * int) list)) = dict_to_tuplelist @@ initialize_mandatory (List.tl init) lst_facts in
+              let _ = Printf.fprintf Stdlib.stdout "3\n" in
+
               let _ = Printf.fprintf Stdlib.stdout "DEBUG TUPLELIST \n" in
               let _ = List.iter (fun (str,ind) -> Printf.fprintf Stdlib.stdout "|%s:%d" str ind) tupled_facts in
               (* Do bonus execution *)
