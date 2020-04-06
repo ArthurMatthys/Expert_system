@@ -9,9 +9,10 @@ open Operation
 let print_err = Printf.eprintf 
 
 let usage () : unit = print_string 
-    "usage : expert_system [file] [-b]\n
+    "usage : expert_system [file] [-b] [-c]\n
   \tinput_file\tfile to evaluate\n
-  \t\"-b\"\tChange the way to evaluate\n"
+  \t\"-b\"\tChange the way to evaluate\n
+  \t\"-c\"\tCheck incoherence on bonus. Option '-b' required\n"
 
 
 let string_of_bool_option (opt:bool option): string = match opt with
@@ -314,7 +315,7 @@ let retrieve_bite_value (index_letter:int) (actual_nbr:int) : bool =
   (((1 lsl index_letter) land actual_nbr) > 0)
 
 let do_bonus (tree:exp_ast) ((list_none,list_true,tupled_facts):((string*bool option)list)*((string*bool option)list)*((string * int) list))
-  (queries: string list) (facts_dict:((string, bool option) Hashtbl.t)): unit =
+  (queries: string list) (check:bool) (facts_dict:((string, bool option) Hashtbl.t)): unit =
     let (bit_max:int) = List.length tupled_facts in 
     (* Dans l'input, voir si incohérence dans le truc *)
     let (nbr_init:int) = add (List.length list_none) bit_max in
@@ -336,7 +337,6 @@ let do_bonus (tree:exp_ast) ((list_none,list_true,tupled_facts):((string*bool op
                    match (retrieve_bite_value index_letter (Option.get verdict_int)) with
                    | true -> Printf.fprintf Stdlib.stdout "%s : %s\n" x (string_of_bool (retrieve_bite_value index_letter (List.hd ret)))
                    | false -> Printf.fprintf Stdlib.stdout "%s : None\n" x
-
       ) (List.tl queries)
 
 (* Transform the dict into a key-index tuple list *)
@@ -404,11 +404,15 @@ let rec remove_bool_opt (lst : (string*int) list) : string list = match lst with
   | [] -> []
   | (h,v)::t -> h :: remove_bool_opt t
 
+
+
 let _ =
-  if not @@ ((Array.length Sys.argv = 2) || (Array.length Sys.argv = 3 && Sys.argv.(2) = "-b"))
+  if not @@ ((Array.length Sys.argv = 2) || (Array.length Sys.argv = 3 && Sys.argv.(2) = "-b")
+  || (Array.length Sys.argv = 4 && ((Sys.argv.(2) = "-c" && Sys.argv.(3) = "-b") || (Sys.argv.(2) = "-b" && Sys.argv.(3) = "-c"))))
   then usage ()
   else
-    let (bonus:bool) = Array.length Sys.argv = 3 in
+    let (bonus:bool) = Array.length Sys.argv > 2 in
+    let (check:bool) = Array.length Sys.argv = 4 && ((Sys.argv.(2) = "-c") || (Sys.argv.(3) = "-c")) in
     let (file_res: (string list, string) result) = read_file Sys.argv.(1) in
     if Result.is_error file_res
     then Printf.eprintf "issue reading file \"%s\" : %s\n" Sys.argv.(1) (Result.get_error file_res)
@@ -462,7 +466,7 @@ let _ =
               let _ = Printf.fprintf Stdlib.stdout "DEBUG TUPLELIST \n" in
               let _ = List.iter (fun (str,ind) -> Printf.fprintf Stdlib.stdout "|%s:%d" str ind) tupled_facts in
               (* Do bonus execution *)
-              let _ = do_bonus tree_bonus (list_none,list_true,tupled_facts) (remove_bool_opt query) @@ initialize_mandatory (List.tl init) lst_facts
+              let _ = do_bonus tree_bonus (list_none,list_true,tupled_facts) (remove_bool_opt query) check @@ initialize_mandatory (List.tl init) lst_facts
               in ()
                 (*
                   let (trees: exp_ast) = unite_facts in
