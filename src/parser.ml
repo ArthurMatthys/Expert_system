@@ -53,6 +53,16 @@ let get_facts (lst:(string*int) list list) : (string*(bool option)) list =
   in
   add_fact lst_flatten []
 
+(* let get_facts_mandatory (lst:(string*int) list list) : ((string*int) list) =
+  let (lst_flatten:(string*int) list) = List.flatten lst in
+  let rec add_fact (facts:(string*int) list) (statements : (string*(bool option)) list): (string*(bool option)) list = match facts with
+    | [] -> statements
+    | (h,v) :: t -> if List.exists ((=) (h, None)) statements || v <> 1
+      then add_fact t statements
+      else add_fact t ((h, None)::statements)
+  in
+  add_fact lst_flatten [] *)
+
 
 let rec remove_imply (lst:(string*int) list) : (string*int) list =
   match lst with 
@@ -154,7 +164,7 @@ let assign_result_to_hashtbl_and_check_error (positive_assign: string list) (sta
 
 (* Do_mandatory : Solve the mandatory part of the program *)
 (* let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((string, bool option) Hashtbl.t)): ((string, bool option) Hashtbl.t) = *)
-let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((string, bool option) Hashtbl.t)): unit =
+let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((string, bool option) Hashtbl.t)): (((string, bool option) Hashtbl.t, string) result list) =
   (* Function evaluates if no errors are found, otherwise, returns it without evaluating *)
   let rec evaluate (tree : exp_ast) (past_queries: string list) (current_table: ((string, bool option) Hashtbl.t)): ((bool option, string) result) =
       match tree with
@@ -235,14 +245,14 @@ let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((stri
                   let _ = Hashtbl.replace current_table query (Hashtbl.find (Result.get_ok (List.hd all_hashtables)) query)
                   in Result.ok current_table
   in
-  let (copy_dict:((string, bool option) Hashtbl.t)) = (Hashtbl.copy facts_dict) in
-  (* let _ = List.map (fun x -> rec_mandatory x [] (Hashtbl.copy facts_dict)) (List.tl queries)  *)
-  let (ret:((((string, bool option) Hashtbl.t), string) result) list) = List.map (fun x -> rec_mandatory x [] copy_dict) (List.tl queries)   
+  let (ret:((((string, bool option) Hashtbl.t), string) result) list) = List.map (fun x -> rec_mandatory x [] (Hashtbl.copy facts_dict)) queries
+  in ret
   (* let _ = rec_mandatory x [] (Hashtbl.copy facts_dict) in *)
-  in List.iter (fun x -> if Result.is_error x
-                          then Printf.fprintf Stdlib.stdout "|%s|\n" (Result.get_error x)
-                          else begin Hashtbl.iter (fun x y -> Printf.fprintf Stdlib.stdout "|%s:%s|-" x (string_of_bool_option y)) (Result.get_ok x) ; 
-                          Printf.fprintf Stdlib.stdout "\n" end ) ret
+(*    
+  List.iter (fun m -> if Result.is_error m
+                          then Printf.fprintf Stdlib.stdout "|%s|\n" (Result.get_error m)
+                          else begin Hashtbl.iter (fun x y -> Printf.fprintf Stdlib.stdout "|%s:%s|-" x (string_of_bool_option y)) (Result.get_ok m) ; 
+                          Printf.fprintf Stdlib.stdout "\n" end ) ret *)
 
 
 (*
@@ -316,6 +326,7 @@ let retrieve_bite_value (index_letter:int) (actual_nbr:int) : bool =
 
 let do_bonus (tree:exp_ast) ((list_none,list_true,tupled_facts):((string*bool option)list)*((string*bool option)list)*((string * int) list))
   (queries: string list) (check:bool) (facts_dict:((string, bool option) Hashtbl.t)): unit =
+    (* let _ = Printf.fprintf Stdlib.stdout "DEBUG-check: |%s|\n" (string_of_bool check) in *)
     let (bit_max:int) = List.length tupled_facts in 
     (* Dans l'input, voir si incohérence dans le truc *)
     let (nbr_init:int) = add (List.length list_none) bit_max in
@@ -404,7 +415,22 @@ let rec remove_bool_opt (lst : (string*int) list) : string list = match lst with
   | [] -> []
   | (h,v)::t -> h :: remove_bool_opt t
 
+let rec remove_bool_opt2 (lst : (string*bool option) list) : string list = match lst with
+  | [] -> []
+  | (h,v)::t -> h :: remove_bool_opt2 t
 
+let print_result_mandatory (result_global: (((string, bool option) Hashtbl.t, string) result list)) (result_queries:(((string, bool option) Hashtbl.t, string) result list))
+  (queries: string list) : unit =
+  (* We first check wether there is an error in any of the 2 lists, if so, just print the error ! *)
+  let (result:((string, bool option) Hashtbl.t, string) result list) = List.filter (fun x -> Result.is_error x) result_global in
+  match List.length result with
+  (* For each and every array in the query list, we will print it's corresponding value *)
+  | 0 -> List.iteri (fun ind x -> let (table_of_query:(string, bool option) Hashtbl.t) = Result.get_ok (List.nth result_queries ind) in
+                                  let (value_of_query_in_proper_table) = Hashtbl.find table_of_query x in
+                                  Printf.fprintf Stdlib.stdout "%s : %s\n" x (string_of_bool_option value_of_query_in_proper_table)
+  ) queries
+  (* Print the corresponding error *)
+  | _ -> Printf.fprintf Stdlib.stdout "%s\n" (Result.get_error (List.hd result))
 
 let _ =
   if not @@ ((Array.length Sys.argv = 2) || (Array.length Sys.argv = 3 && Sys.argv.(2) = "-b")
@@ -444,13 +470,12 @@ let _ =
               (* HERE WE CHECK THE CORRECTNESS OF THE FILE --> NEED TO PARSE AND CHECK THE RETURN *)
               then let _ = List.iter check_correctness_imply_list facts in
               let (trees: exp_ast list) = List.map (fun e -> exp_ast_of_list_mandatory e) facts in
-              
-
               (* let dictionnary_ready = initialize_mandatory (List.tl init) lst_facts in *)
-              let _ = do_mandatory trees (remove_bool_opt query) @@ initialize_mandatory (List.tl init) lst_facts in
-              (* let _ = Printf.fprintf Stdlib.stdout "DEBUG MAIN\n" in
-               let _ = Hashtbl.iter (fun x y -> Printf.fprintf Stdlib.stdout "|%s:%d|-" x (int_of_booloption y)) results_hashtable in *)
-                print_string "\n"
+              let (result_query: (((string, bool option) Hashtbl.t, string) result list)) = do_mandatory trees (List.tl (remove_bool_opt query)) @@ initialize_mandatory (List.tl init) lst_facts in
+              (* Do the same with all letters, in order to check for incoherence *)
+              let (result_global: (((string, bool option) Hashtbl.t, string) result list)) = do_mandatory trees (remove_bool_opt2 lst_facts) @@ initialize_mandatory (List.tl init) lst_facts in
+              let _ = print_result_mandatory result_global result_query (List.tl (remove_bool_opt query))
+              in ()
               else 
               (* Construct the tree of the bonus *)
               let _ = Printf.fprintf Stdlib.stdout "1\n" in
