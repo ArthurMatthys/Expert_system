@@ -12,7 +12,7 @@ let usage () : unit = print_string
     "usage : expert_system [file] [-b] [-c]\n
   \tinput_file\tfile to evaluate\n
   \t\"-b\"\tChange the way to evaluate\n
-  \t\"-c\"\tCheck incoherence on bonus. Option '-b' required\n"
+  \t\"-c\"\tDon't care about initial facts. Can be used to look for incoherence with initial facts. Option '-b' required\n"
 
 
 let string_of_bool_option (opt:bool option): string = match opt with
@@ -312,8 +312,6 @@ let bitcompare_int (int_lst : int list) (nbr_max:int) : int =
     | h::[] -> ((lnot (h lxor int_ref)) land nbr_max) land coherent
     | h::t -> let simil = (lnot (h lxor int_ref)) land nbr_max in
               let cohe_tmp = simil land coherent in
-              let _ = Printf.fprintf Stdlib.stdout "simil : %d\n" simil in
-              let _ = Printf.fprintf Stdlib.stdout "cohe_tmp : %d\n" cohe_tmp in
               bit_compare t cohe_tmp
   in match int_lst with
     | [] -> -1
@@ -329,26 +327,32 @@ let do_bonus (tree:exp_ast) ((list_none,list_true,tupled_facts):((string*bool op
     (* let _ = Printf.fprintf Stdlib.stdout "DEBUG-check: |%s|\n" (string_of_bool check) in *)
     let (bit_max:int) = List.length tupled_facts in 
     (* Dans l'input, voir si incohérence dans le truc *)
-    let (nbr_init:int) = add (List.length list_none) bit_max in
+    let (nbr_init:int) = if check then 0 else add (List.length list_none) bit_max in
     let (nbr_max:int) = add 0 bit_max in
     let _ = Printf.fprintf Stdlib.stdout "\nDEBUG-INTS: nbr_init: %d-nbr_max: %d\n" nbr_init nbr_max in 
     let (ret:int list) = get_lst tree tupled_facts nbr_init nbr_max in
     let _ = List.iter (fun x -> Printf.fprintf Stdlib.stdout "DEBUG-ret: |%d|\n" x) ret in
     let (verdict_int:int option) = match List.length ret with
                             | 0 -> None
-                            | 1 -> Some (List.hd ret)
+                            | 1 -> Some nbr_max
                             | _ -> Some (bitcompare_int ret nbr_max)
-    in let _ = Printf.fprintf Stdlib.stdout "DEBUG VERDICT %d\n" (int_of_intoption verdict_int)
-    in List.iter (fun x ->
-      match Hashtbl.find facts_dict x with
-      | Some true -> Printf.fprintf Stdlib.stdout "%s : true\n" x
-      | _ -> match verdict_int with
-            | None -> Printf.fprintf Stdlib.stdout "%s : None\n" x
-            | Some (_) -> let (_, index_letter) = List.find (fun (str, _) -> str = x) tupled_facts in
-                   match (retrieve_bite_value index_letter (Option.get verdict_int)) with
-                   | true -> Printf.fprintf Stdlib.stdout "%s : %s\n" x (string_of_bool (retrieve_bite_value index_letter (List.hd ret)))
-                   | false -> Printf.fprintf Stdlib.stdout "%s : None\n" x
-      ) (List.tl queries)
+    in let _ = Printf.fprintf Stdlib.stdout "DEBUG VERDICT %d\n" (int_of_intoption verdict_int) in
+    match verdict_int with
+    | None -> if check 
+      then Printf.fprintf Stdlib.stdout "Incoherence in relations\n"
+      else Printf.fprintf Stdlib.stdout "Incoherence either in initial facts or in relations\n"
+    | _ -> List.iter (fun x ->
+          let (_, index_letter) = List.find (fun (str, _) -> str = x) tupled_facts in 
+          match (retrieve_bite_value index_letter (Option.get verdict_int)) with
+          | true -> 
+            let (value:bool option) = Some (retrieve_bite_value index_letter (List.hd ret)) in
+            if Hashtbl.find facts_dict x = Some true && value <> (Some true)
+            then Printf.fprintf Stdlib.stdout "An incoherence for letter %s has been found\n" x
+            else Printf.fprintf Stdlib.stdout "%s : %s \n" x (string_of_bool_option value)
+          | false -> if Hashtbl.find facts_dict x = Some true
+          then Printf.fprintf Stdlib.stdout "An incoherence for letter %s has been found\n" x
+          else Printf.fprintf Stdlib.stdout "%s : None\n" x 
+          ) (List.tl queries)
 
 (* Transform the dict into a key-index tuple list *)
 let dict_to_tuplelist (dict:(string, bool option) Hashtbl.t) : (((string*bool option)list)*((string*bool option)list)*((string*int)list)) = 
@@ -488,8 +492,8 @@ let _ =
               let ((list_none:(string*bool option)list),(list_true:(string*bool option)list),(tupled_facts:(string * int) list)) = dict_to_tuplelist @@ initialize_mandatory (List.tl init) lst_facts in
               let _ = Printf.fprintf Stdlib.stdout "3\n" in
 
-              let _ = Printf.fprintf Stdlib.stdout "DEBUG TUPLELIST \n" in
-              let _ = List.iter (fun (str,ind) -> Printf.fprintf Stdlib.stdout "|%s:%d" str ind) tupled_facts in
+              (* let _ = Printf.fprintf Stdlib.stdout "DEBUG TUPLELIST \n" in
+              let _ = List.iter (fun (str,ind) -> Printf.fprintf Stdlib.stdout "|%s:%d" str ind) tupled_facts in *)
               (* Do bonus execution *)
               let _ = do_bonus tree_bonus (list_none,list_true,tupled_facts) (remove_bool_opt query) check @@ initialize_mandatory (List.tl init) lst_facts
               in ()
