@@ -1,56 +1,18 @@
 #A => !!C
 A + B + C => E # A and B and C implies D
-#B => B
-!!A => B
-!!A => D
+
+#!B => !C
+D => !C
+C => D
+
 =AB # Initial facts : A, B and G are true. All others are false.
 
-#(!(A + B + C) | E) + (!(A) | (!C)) < Le tout doit etre vrai
-#(!(true + C) | E) + (false | (!C))
-#(!(true + C) | E) + (false | (!C)) -> C false 
-#(true | E) + true -> E None
+#A + B + C => E # A and B and C implies D
+#B => B
+#!D => D
+#D => !D
 
-# 00000000 00000000 00000000 00001100
-# 00000000 00000000 00000000 00001101
-# 00000000 00000000 00000000 00000001
-# 11111111 11111111 11111111 11111111
+#=AB # Initial facts : A, B and G are true. All others are false.
 
-# 00000000 00000000 00000000 00001111
-# 11111111 11111111 11111111 11111110
-# 00000000 00000000 00000000 00001110
-
-
-# 1100
-
-
-#let bitcompare_int (int_lst : int list) : int =
-#   let rec bit_compare (int_lst: int list) (coherent:int) : int =
-#      match int_lst with
-#      | [] -> coherent
-#      | h::[] -> (lnot (h lxor int_ref)) land coherent
-#      | h::t -> let simil = lnot (h lxor int_ref) in
-#                let cohe_tmp = simil land coherent in
-#                let _ = Printf.fprintf Stdlib.stdout "simil : %d\n" simil in
-#                let _ = Printf.fprintf Stdlib.stdout "cohe_tmp : %d\n" cohe_tmp in
-#                bit_compare t cohe_tmp
-#    in bit_compare (List.tl int_lst) int_ref
-#  match int_lst with
-#    | [] -> -1
-#    | h::[] -> h
-#    | h1::h2::[] -> lnot(h1 lxor h2)
-#    | h1::h2::t -> bit_compare t (lnot(h1 lxor h2)) 
-
-
-# ABCE
-# 1100
-# 1101
-# 1111
-# 11??
-
-#  compare (1111) (1100 / 1101)
-#		   1110 < les bits coherents
-#		   1100	< les bits coherents
-#		and 1100 < les bits coherents entre tous
-# [1101, 1111]
-
-?ECD # Queries : What are G, V and X ?
+?EC # Queries : What are G, V and X ?
+#?EC # Queries : What are G, V and X ?
