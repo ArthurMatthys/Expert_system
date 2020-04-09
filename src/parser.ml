@@ -139,21 +139,30 @@ let check_incoherence_in_lst (status_list_execution: (((((string, bool option) H
   incoherence_in_lst status_list_execution (List.hd status_list_execution)
 
 (* Tail recursive function that changes the value of the current_table, and checks at the same time any error*)
-let assign_result_to_hashtbl_and_check_error (positive_assign: string list) (status_evaluation: (bool option))
-  (current_table: ((string, bool option) Hashtbl.t)) (facts_dict:((string, bool option) Hashtbl.t)): ((unit, string) result) =
+let assign_result_to_hashtbl_and_check_error (positive_assign: string list) (status_evaluation: (bool option)) 
+  (current_table: ((string, bool option) Hashtbl.t)) (positive_list: bool): ((unit, string) result) =
   let rec assign (positive_assign: string list) : ((unit, string) result) =
     match positive_assign with
-    | [] -> Result.ok ()
+    | [] -> let _ = Printf.fprintf Stdlib.stdout "\nassign_result end : \n" in
+            let _ =  Hashtbl.iter (fun x y -> Printf.fprintf Stdlib.stdout "|%s:%s|-" x (string_of_bool_option y)) current_table in
+            let _ = Printf.fprintf Stdlib.stdout "\n\n" in
+            Result.ok ()
     (* if status_evaluation == what was before, don't change *)
-    | h::t -> let value = Hashtbl.find facts_dict h in
-                if (status_evaluation = value)
-                then assign t
+    | h::t -> let value = Hashtbl.find current_table h in
+              let _ = Printf.fprintf Stdlib.stdout "\nvalue:%s-%s\n" h (string_of_bool_option value) in
+                (* if (status_evaluation = value) *)
+                (* si positive list -> alors ça *)
+                (* && (Option.is_some value || positive_list)) *)
+                if status_evaluation = value
+                then let _ = Printf.fprintf Stdlib.stdout "\n%s\tici\n" h in assign t
                 (* if (status_evaluation == false and before was None) or (status_evaluation == true and before was None) change *)
-                else if Option.is_none value && (not @@ Option.is_none status_evaluation)
-                  then begin Hashtbl.replace current_table h status_evaluation ; assign t end
+                else if (Option.is_none value) && (not @@ Option.is_none status_evaluation)
+                  then begin let _ = Printf.fprintf Stdlib.stdout "\n%s\t la\n" h in Hashtbl.replace current_table h status_evaluation ; assign t end
                 else
                   Result.Error("An incoherence for letter " ^ h ^ " has been found")
   in 
+  let _ = Printf.fprintf Stdlib.stdout "\nassign_result start:\n" in
+  let _ =  Hashtbl.iter (fun x y -> Printf.fprintf Stdlib.stdout "|%s:%s|-" x (string_of_bool_option y)) current_table in
   assign positive_assign
 
 (* DEBUG *)
@@ -174,6 +183,7 @@ let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((stri
                                                                       if Result.is_error ret_mandatory
                                                                       then Result.Error (Result.get_error ret_mandatory)
                                                                       else Result.ok (Hashtbl.find (Result.get_ok ret_mandatory) l)
+                                                                      (* else let ret =  Hashtbl.find (Result.get_ok ret_mandatory) l in if Option.is_none ret then Result.ok (Some false) else Result.ok ret *)
                                                                  else Result.ok status
       | And (left, right) -> my_and (evaluate left past_queries current_table) (evaluate right past_queries current_table)
       | Or (left, right) -> my_or (evaluate left past_queries current_table) (evaluate right past_queries current_table)
@@ -189,6 +199,8 @@ let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((stri
     (* Result of the evaluation *)
     let (status_evaluation: ((bool option, string) result)) = evaluate tree past_queries current_table in
     (* If it's an error, return it *)
+    let _ = Printf.fprintf Stdlib.stdout "\nevaluate_trees_hashtbls\n" in
+    let _ =  Hashtbl.iter (fun x y -> Printf.fprintf Stdlib.stdout "|%s:%s|-" x (string_of_bool_option y)) current_table in
     if Result.is_error status_evaluation
     then Result.Error (Result.get_error status_evaluation)
     (* Else, change it *)
@@ -199,8 +211,8 @@ let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((stri
                                                                    else Result.ok (Some true)
       in
       (* Change status in hashtabl, and check wether error occurs *)
-      let (modified_hshtable_positive: ((unit, string) result)) = assign_result_to_hashtbl_and_check_error positive_assign (Result.get_ok status_evaluation) current_table facts_dict in
-      let (modified_hshtable_negative: ((unit, string) result)) = assign_result_to_hashtbl_and_check_error negative_assign (Result.get_ok neg_status_evaluation) current_table facts_dict in
+      let (modified_hshtable_positive: ((unit, string) result)) = assign_result_to_hashtbl_and_check_error positive_assign (Result.get_ok status_evaluation) current_table true in
+      let (modified_hshtable_negative: ((unit, string) result)) = assign_result_to_hashtbl_and_check_error negative_assign (Result.get_ok neg_status_evaluation) current_table false in
       (* Check if error is found in change of hashtable, if not, return it *)
       if Result.is_error modified_hshtable_positive
       then Result.Error (Result.get_error modified_hshtable_positive)
@@ -212,10 +224,11 @@ let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((stri
   (* Renvoie un bool option qui correspond à la valeur de ma query *)
   rec_mandatory (query: string) (past_queries: string list) (current_table: ((string, bool option) Hashtbl.t)): ((((string, bool option) Hashtbl.t), string) result) =
     if List.mem query past_queries 
-    then begin Hashtbl.replace current_table query None ; Result.ok current_table end
+    then begin let _ = Printf.fprintf Stdlib.stdout "\n%s\t ou la\n" query in Hashtbl.replace current_table query (Some false) ; Result.ok current_table end
     else
       (* Collect all the trees containing the letter on the right side *)
       let (tmp_lst:exp_ast list) = find_tree facts query in
+      let _ = Printf.fprintf Stdlib.stdout "\nDEBUG query: %s\n" query in
       (* let _ = List.map print_exp_ast tmp_lst in *)
       (* Collect the current status of the letter in the hash_table *)
       let (status_query_htable: bool option) = Hashtbl.find current_table query in
@@ -231,7 +244,7 @@ let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((stri
                 else Result.Error("An incoherence for letter " ^ query ^ " has been found")
       (* As the list is not empty, we check wether all the results coincide, otherwise, print error *)
               (* Evaluate each tree and retrieve *)
-      | _ ->  let (all_hashtables: ((((string, bool option) Hashtbl.t), string) result) list) = List.map (fun x -> evaluate_trees_hashtbls x (query::past_queries) (Hashtbl.copy current_table)) tmp_lst in
+      | _ ->  let (all_hashtables: ((((string, bool option) Hashtbl.t), string) result) list) = List.map (fun x -> evaluate_trees_hashtbls x (query::past_queries) (current_table)) tmp_lst in
               (* Check wether there is an error *)
               let (error_is_present: ((((string, bool option) Hashtbl.t), string) result) list) = List.filter(fun x -> Result.is_error x) all_hashtables in
               if List.length error_is_present > 0
@@ -239,6 +252,12 @@ let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((stri
               else
                 (* Bool that states wether there is an incoherence between the trees and the result of the trees and the initial state of trees *)
                 let (no_incoherence_in_lst: ((bool, string) result)) = check_incoherence_in_lst all_hashtables query in
+   let _ = Printf.fprintf Stdlib.stdout "\n|-DEBUG-|\n" in
+   let _ = Printf.fprintf Stdlib.stdout "query: %s\n" query in
+  let _ = List.iter (fun m -> if Result.is_error m
+                          then Printf.fprintf Stdlib.stdout "|%s|\n" (Result.get_error m)
+                          else begin Hashtbl.iter (fun x y -> Printf.fprintf Stdlib.stdout "%s -> |%s:%s|-" query x (string_of_bool_option y)) (Result.get_ok m) ; 
+                          Printf.fprintf Stdlib.stdout "\n" end ) all_hashtables in
                 if Result.is_error no_incoherence_in_lst
                 then Result.Error (Result.get_error no_incoherence_in_lst)
                 else
@@ -248,11 +267,7 @@ let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((stri
   let (ret:((((string, bool option) Hashtbl.t), string) result) list) = List.map (fun x -> rec_mandatory x [] (Hashtbl.copy facts_dict)) queries
   in ret
   (* let _ = rec_mandatory x [] (Hashtbl.copy facts_dict) in *)
-(*    
-  List.iter (fun m -> if Result.is_error m
-                          then Printf.fprintf Stdlib.stdout "|%s|\n" (Result.get_error m)
-                          else begin Hashtbl.iter (fun x y -> Printf.fprintf Stdlib.stdout "|%s:%s|-" x (string_of_bool_option y)) (Result.get_ok m) ; 
-                          Printf.fprintf Stdlib.stdout "\n" end ) ret *)
+
 
 
 (*
