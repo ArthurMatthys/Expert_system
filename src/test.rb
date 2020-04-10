@@ -30,19 +30,27 @@ def     compare_expected_result(filename)
     # Output
     if (sortie == ret_value) then
         puts "#{filename} -> [\e[32mok\e[0m]"
+        return 0
     else
         puts "#{filename} -> [\e[31mko\e[0m]"
+        return 1
     end
 
 end
 
-
 def     main()
 
+    a = 0
     # Loop on all tests
     Dir.foreach(PATH) do |filename|
         next if filename == '.' or filename == '..'
-        compare_expected_result(filename)
+        a += compare_expected_result(filename)
+    end
+
+    if a > 0 then
+        puts "\e[31mAt least a test failed\e[0m"
+    else
+        puts "\e[32mAll good\e[0m"
     end
 end
 

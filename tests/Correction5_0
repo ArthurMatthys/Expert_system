@@ -1,0 +1,12 @@
+[Entree]
+A | B + C => E
+(F | G) + H => E
+
+?E
+
+=
+
+[Sortie]
+E : false
+
+[Options]

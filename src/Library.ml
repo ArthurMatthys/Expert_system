@@ -1,15 +1,9 @@
-let remove_parenthesis (facts_list:(string*int)list) : (string*int) list =
-  let rec rm_parent (facts_lst:(string*int)list) : (string*int) list =
-    match facts_lst with
-    | [] -> []
-    | h::[] -> []
-    | h::t -> h :: rm_parent t
-  in
-  match facts_list with 
+let rec remove_parenthesis (facts_list:(string*int)list) : (string*int) list =
+  match facts_list with
   | [] -> []
-  | (h,v)::t -> if h = "("
-    then rm_parent t
-    else facts_list
+  | ("(", _) :: t -> remove_parenthesis t
+  | (")", _) :: t -> remove_parenthesis t
+  | h::t -> h :: remove_parenthesis t
 
 
 let index_of (lst:string list) (search:string): int=

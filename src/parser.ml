@@ -23,8 +23,8 @@ let string_of_bool_option (opt:bool option): string = match opt with
 (* let print_facts (fact, value_fact:(string*(bool option))) : unit =
    Printf.printf "fact : %s\tvalue : %s\n" fact @@ string_of_bool_option value_fact *)
 
-(* let print_facts (fact, value_fact:(string*int)) : unit =
-   Printf.fprintf Stdlib.stdout "print_facts: |%s-%d|\n" fact value_fact *)
+let print_facts (fact, value_fact:(string*int)) : unit =
+   Printf.fprintf Stdlib.stdout "print_facts: |%s-%d|\n" fact value_fact 
 
 
 
@@ -193,21 +193,24 @@ let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((stri
     then Result.Error (Result.get_error status_evaluation)
     (* Else, change it *)
     else 
-      (* Calculate the inverse of the status, for the negative values *)
-      let (neg_status_evaluation:((bool option, string) result)) = if Option.is_none (Result.get_ok status_evaluation) then status_evaluation
-        else if (Result.get_ok status_evaluation) = Some true then Result.ok (Some false)
-        else Result.ok (Some true)
-      in
-      (* Change status in hashtabl, and check wether error occurs *)
-      let (modified_hshtable_positive: ((unit, string) result)) = assign_result_to_hashtbl_and_check_error positive_assign (Result.get_ok status_evaluation) current_table true in
-      let (modified_hshtable_negative: ((unit, string) result)) = assign_result_to_hashtbl_and_check_error negative_assign (Result.get_ok neg_status_evaluation) current_table false in
-      (* Check if error is found in change of hashtable, if not, return it *)
-      if Result.is_error modified_hshtable_positive
-      then Result.Error (Result.get_error modified_hshtable_positive)
-      else 
-      if Result.is_error modified_hshtable_negative
-      then Result.Error (Result.get_error modified_hshtable_negative)
-      else Result.ok current_table
+      if (Result.get_ok status_evaluation) = (Some false)
+      then Result.ok current_table
+      else
+        (* Calculate the inverse of the status, for the negative values *)
+        let (neg_status_evaluation:((bool option, string) result)) = if Option.is_none (Result.get_ok status_evaluation) then status_evaluation
+          else if (Result.get_ok status_evaluation) = Some true then Result.ok (Some false)
+          else Result.ok (Some true)
+        in
+        (* Change status in hashtabl, and check wether error occurs *)
+        let (modified_hshtable_positive: ((unit, string) result)) = assign_result_to_hashtbl_and_check_error positive_assign (Result.get_ok status_evaluation) current_table true in
+        let (modified_hshtable_negative: ((unit, string) result)) = assign_result_to_hashtbl_and_check_error negative_assign (Result.get_ok neg_status_evaluation) current_table false in
+        (* Check if error is found in change of hashtable, if not, return it *)
+        if Result.is_error modified_hshtable_positive
+        then Result.Error (Result.get_error modified_hshtable_positive)
+        else 
+        if Result.is_error modified_hshtable_negative
+        then Result.Error (Result.get_error modified_hshtable_negative)
+        else Result.ok current_table
   and
     (* Renvoie un bool option qui correspond à la valeur de ma query *)
     rec_mandatory (query: string) (past_queries: string list) (current_table: ((string, bool option) Hashtbl.t)): ((((string, bool option) Hashtbl.t), string) result) =
@@ -241,7 +244,8 @@ let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((stri
           if Result.is_error no_incoherence_in_lst
           then Result.Error (Result.get_error no_incoherence_in_lst)
           else
-            let _ = Hashtbl.replace current_table query (Hashtbl.find (Result.get_ok (List.hd all_hashtables)) query)
+            let value_query = (Hashtbl.find (Result.get_ok (List.hd all_hashtables)) query) in
+            let _ = Hashtbl.replace current_table query ((fun e -> if Option.is_none e then Some false else e) value_query) 
             in Result.ok current_table
   in
   let (ret:((((string, bool option) Hashtbl.t), string) result) list) = List.map (fun x -> rec_mandatory x [] (Hashtbl.copy facts_dict)) queries
@@ -269,9 +273,12 @@ let evaluate_bonus (tree : exp_ast) (index_list: (string*int) list) (actual_nbr:
 
 (* Function that constructs the wanted number for bonus evaluation with bitwise operators *)
 let rec add (init:int) (max:int) : int = 
-  if init = (max - 1) 
-  then (1 lsl init)
-  else (1 lsl init) + (add (init + 1) max)
+  if init = max
+  then 0
+  else
+    if init = (max - 1) 
+    then (1 lsl init)
+    else (1 lsl init) + (add (init + 1) max)
 
 (* Create the list of ints satisfying the equation *)
 let get_lst (tree:exp_ast) (tupled_facts:(string * int) list) (nbr_init: int) (nbr_max:int) : (int list) = 
@@ -470,6 +477,7 @@ let _ =
           (* HERE WE CHECK THE CORRECTNESS OF THE FILE --> NEED TO PARSE AND CHECK THE RETURN *)
           then let _ = List.iter check_correctness_imply_list facts in
             let (trees: exp_ast list) = List.map (fun e -> exp_ast_of_list_mandatory e) facts in
+            (* let _ = List.map print_exp_ast trees in *)
             (* let dictionnary_ready = initialize_mandatory (List.tl init) lst_facts in *)
             let (result_query: (((string, bool option) Hashtbl.t, string) result list)) = do_mandatory trees (List.tl (remove_bool_opt query)) @@ initialize_mandatory (List.tl init) lst_facts in
             (* Do the same with all letters, in order to check for incoherence *)

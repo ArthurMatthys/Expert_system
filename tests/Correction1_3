@@ -1,0 +1,14 @@
+[Entree]
+B + C => A
+D | E => B
+B => C
+
+?A
+
+=DE
+
+[Sortie]
+A : true
+
+[Options]
+
