@@ -1,0 +1,12 @@
+[Entree]
+A + B + C => E
+B => D
+C => D
+=AB
+?EC
+
+[Sortie]
+An incoherence for letter D has been found
+
+[options]
+-b -c

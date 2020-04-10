@@ -324,14 +324,15 @@ let do_bonus (tree:exp_ast) ((list_none,list_true,tupled_facts):((string*bool op
   (* Dans l'input, voir si incohérence dans le truc *)
   let (nbr_init:int) = if check then 0 else add (List.length list_none) bit_max in
   let (nbr_max:int) = add 0 bit_max in
-  let _ = Printf.fprintf Stdlib.stdout "\nDEBUG-INTS: nbr_init: %d-nbr_max: %d\n" nbr_init nbr_max in 
+  (* let _ = Printf.fprintf Stdlib.stdout "\nDEBUG-INTS: nbr_init: %d-nbr_max: %d\n" nbr_init nbr_max in  *)
   let (ret:int list) = get_lst tree tupled_facts nbr_init nbr_max in
-  let _ = List.iter (fun x -> Printf.fprintf Stdlib.stdout "DEBUG-ret: |%d|\n" x) ret in
+  (* let _ = List.iter (fun x -> Printf.fprintf Stdlib.stdout "DEBUG-ret: |%d|\n" x) ret in *)
   let (verdict_int:int option) = match List.length ret with
     | 0 -> None
     | 1 -> Some nbr_max
     | _ -> Some (bitcompare_int ret nbr_max)
-  in let _ = Printf.fprintf Stdlib.stdout "DEBUG VERDICT %d\n" (int_of_intoption verdict_int) in
+  in 
+  (* let _ = Printf.fprintf Stdlib.stdout "DEBUG VERDICT %d\n" (int_of_intoption verdict_int) in *)
   match verdict_int with
   | None -> if check 
     then Printf.fprintf Stdlib.stdout "Incoherence in relations\n"
@@ -477,15 +478,15 @@ let _ =
             in ()
           else 
             (* Construct the tree of the bonus *)
-            let _ = Printf.fprintf Stdlib.stdout "1\n" in
+            (* let _ = Printf.fprintf Stdlib.stdout "1\n" in *)
             let (tree_bonus:exp_ast) = exp_ast_of_list_bonus facts in              
-            let _ = Printf.fprintf Stdlib.stdout "2\n" in
+            (* let _ = Printf.fprintf Stdlib.stdout "2\n" in *)
 
 
-            let _ = print_exp_ast tree_bonus in
+            (* let _ = print_exp_ast tree_bonus in *)
             (* Construct a tuple list of all the facts [used later for decoding of bites]  *)
             let ((list_none:(string*bool option)list),(list_true:(string*bool option)list),(tupled_facts:(string * int) list)) = dict_to_tuplelist @@ initialize_mandatory (List.tl init) lst_facts in
-            let _ = Printf.fprintf Stdlib.stdout "3\n" in
+            (* let _ = Printf.fprintf Stdlib.stdout "3\n" in *)
 
             (* let _ = Printf.fprintf Stdlib.stdout "DEBUG TUPLELIST \n" in
                let _ = List.iter (fun (str,ind) -> Printf.fprintf Stdlib.stdout "|%s:%d" str ind) tupled_facts in *)
