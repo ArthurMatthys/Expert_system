@@ -18,4 +18,14 @@ F : true
 K : false
 P : true
 
-[Options]
+[Sortie_B]
+A : true 
+F : true 
+K : None
+P : true
+
+[Sortie_C]
+A : None
+F : None
+K : None
+An incoherence for letter P has been found

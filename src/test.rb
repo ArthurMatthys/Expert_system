@@ -1,6 +1,7 @@
 require 'tempfile'
 
 PATH="../tests/"
+OPTIONS=["", "-b", "-b -c"]
 
 def     create_and_execute_tmp_file(entree, options)
 
@@ -19,23 +20,31 @@ def     compare_expected_result(filename)
     # Read the file in one string
     text = File.read(PATH + filename)
     
-    # Parse with Regex
+    # Parse and store with Regex
+    output = Hash.new
     entree = text.scan(/\[Entree\]((.|\n)*?)\[Sortie\]/)[0][0]
-    sortie = text.scan(/\[Sortie\]((.|\n)*?)\[Options\]/)[0][0].delete("\n")
-    options = text.scan(/\[Options\]((.|\n)*)$/)[0][0].delete("\n")
+    output['Mandatory'] = text.scan(/\[Sortie\]((.|\n)*?)\[Sortie_B\]/)[0][0].delete("\n ")
+    output['Option B'] = text.scan(/\[Sortie_B\]((.|\n)*?)\[Sortie_C\]/)[0][0].delete("\n ")
+    output['Option C'] = text.scan(/\[Sortie_C\]((.|\n)*)$/)[0][0].delete("\n ")
 
-    # Retrieve execution output
-    ret_value = create_and_execute_tmp_file(entree, options).delete("\n")
+    a = 0
+    # Loop and process verification
+    output.each_with_index do | (key,value), index |
+        # Retrieve execution output
+        ret_value = create_and_execute_tmp_file(entree, OPTIONS[index]).delete("\n ")
+        # Output color color
+        colored_verdict = if (value == ret_value) then "[\e[32mok\e[0m]" else a += 1 ; "[\e[31mko\e[0m]"  end
 
-    # Output
-    if (sortie == ret_value) then
-        puts "#{filename} -> [\e[32mok\e[0m]"
-        return 0
-    else
-        puts "#{filename} -> [\e[31mko\e[0m]"
-        return 1
+        # Change output regarding index
+        if (index == 0) then
+            puts "#{key} : #{filename}".ljust(30) + "-> #{colored_verdict}".rjust(20) 
+        else
+            puts "#{key}".ljust(30) + "-> #{colored_verdict}".rjust(20)
+        end
     end
 
+    puts "\n"
+    return a
 end
 
 def     main()
@@ -47,7 +56,7 @@ def     main()
         a += compare_expected_result(filename)
     end
 
-    if a > 0 then
+    if (a > 0) then
         puts "\e[31mAt least a test failed\e[0m"
     else
         puts "\e[32mAll good\e[0m"

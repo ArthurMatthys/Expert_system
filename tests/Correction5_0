@@ -9,4 +9,8 @@ A | B + C => E
 [Sortie]
 E : false
 
-[Options]
+[Sortie_B]
+E : None
+
+[Sortie_C]
+E : None

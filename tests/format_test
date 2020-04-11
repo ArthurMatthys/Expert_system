@@ -9,5 +9,10 @@ C => D
 E : false
 C : false
 
-[Options]
+[Sortie_B]
+E : None
+C : None
 
+[Sortie_C]
+E : None
+C : None
