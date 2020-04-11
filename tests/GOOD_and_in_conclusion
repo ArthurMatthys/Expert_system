@@ -1,0 +1,23 @@
+[Entree]
+A + B => C + D + U # A, B, C and D are True
+L + E + Z + W <=> F # F, L and E are true
+Y <=> F
+
+?FCDU
+
+=ABF
+
+[Sortie]
+Error in line "L+E+Z+W<=>F" : <=> is not handled in mandatory part
+
+[Sortie_B]
+F : true 
+C : true 
+D : true 
+U : true 
+
+[Sortie_C]
+An incoherence for letter F has been found
+C : None
+D : None
+U : None

@@ -1,0 +1,16 @@
+[Entree]
+!A => B # A is True, so B is False
+!C => D # C is False, so D is True
+
+?BDF
+
+=AE
+
+[Sortie]
+Fact in query wasn't found in facts list : F
+
+[Sortie_B]
+Fact in query wasn't found in facts list : F
+
+[Sortie_C]
+Fact in query wasn't found in facts list : F

@@ -1,0 +1,13 @@
+[Entree]
+A + B => C # C is False
+
+?C
+
+[Sortie]
+Could not find the initial facts
+
+[Sortie_B]
+Could not find the initial facts
+
+[Sortie_C]
+Could not find the initial facts

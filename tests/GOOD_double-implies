@@ -1,0 +1,20 @@
+[Entree]
+C <=> D  # C and D are True
+C <=> F  # C and F are True
+
+?FCD
+
+=F
+
+[Sortie]
+Error in line "C<=>D" : <=> is not handled in mandatory part
+
+[Sortie_B]
+F : true 
+C : true 
+D : true 
+
+[Sortie_C]
+An incoherence for letter F has been found
+C : None
+D : None

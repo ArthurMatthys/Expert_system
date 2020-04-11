@@ -1,0 +1,19 @@
+[Entree]
+!A => B # A is True, so B is False
+!C => D # C is False, so D is True
+
+?BD
+
+=A
+
+[Sortie]
+B : false
+D : true
+
+[Sortie_B]
+B : None
+D : None
+
+[Sortie_C]
+B : None
+D : None

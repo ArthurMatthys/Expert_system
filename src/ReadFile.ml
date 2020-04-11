@@ -1,13 +1,13 @@
 open Unix
 
-let rec _read (in_chan:in_channel): string list =
-  try 
-    let line = input_line in_chan in
-    if String.equal line "" then 
-    _read in_chan
-    else line :: _read in_chan
-  with 
-    End_of_file -> []
+let _read (in_chan:in_channel): string list =
+  let rec _rec_read n =
+    match input_line in_chan with
+      | line -> if String.equal line "" then 
+                    _rec_read in_chan
+                  else line :: _rec_read in_chan
+      | exception End_of_file -> []
+in _rec_read in_chan
 
 let read_file (filename:string): (string list, string) result=
    try

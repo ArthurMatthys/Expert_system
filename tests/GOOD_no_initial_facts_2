@@ -1,0 +1,14 @@
+[Entree]
+A + B => C # C is False
+
+?C
+=
+
+[Sortie]
+C : false
+
+[Sortie_B]
+C : None
+
+[Sortie_C]
+C : None

@@ -1,0 +1,35 @@
+[Entree]
+((((((((((A)))))))))) => C # C is True
+A + !(B) => D # D is False
+(D | E) => W # W is False
+!(!(!C) ^ !(!F)) => G # G is true
+(((!E ^ (D + A + B)))) => F # F is true
+(E + ((!C | F)) + A) + B ^ (A + F) => Z # Z is True
+
+?CDWGFZ
+
+=AB
+
+[Sortie]
+C : true
+D : false
+W : false
+G : true
+F : true
+Z : true
+
+[Sortie_B]
+C : true 
+D : None
+W : None
+G : None
+F : None
+Z : None
+
+[Sortie_C]
+C : None
+D : None
+W : None
+G : None
+F : None
+Z : None

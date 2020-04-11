@@ -1,0 +1,19 @@
+[Entree]
+=AB
+A + B => E # E is True
+=C
+=D
+C + D => F # F is True
+
+?EF
+
+=GHIZ
+
+[Sortie]
+There is two lines containing initial facts
+
+[Sortie_B]
+There is two lines containing initial facts
+
+[Sortie_C]
+There is two lines containing initial facts

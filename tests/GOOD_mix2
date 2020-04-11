@@ -1,0 +1,15 @@
+[Entree]
+!A ^ !A | A | !A + A=> C # C is true
+
+?C
+
+=A
+
+[Sortie]
+C : true
+
+[Sortie_B]
+C : true 
+
+[Sortie_C]
+C : None

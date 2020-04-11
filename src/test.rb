@@ -1,4 +1,5 @@
 require 'tempfile'
+require 'open3'
 
 PATH="../tests/"
 OPTIONS=["", "-b", "-b -c"]
@@ -10,7 +11,10 @@ def     create_and_execute_tmp_file(entree, options)
     Tempfile.create { |f| 
         f << entree;
         f.rewind;
-        value = `./a.out #{f.path} #{options}`
+        value, stderr, status = Open3.capture3("./a.out #{f.path} #{options}")
+        if value.empty? then
+            value = stderr
+        end
     }
     return value
 end
@@ -37,10 +41,11 @@ def     compare_expected_result(filename)
 
         # Change output regarding index
         if (index == 0) then
-            puts "#{key} : #{filename}".ljust(30) + "-> #{colored_verdict}".rjust(20) 
+            puts "#{key} : #{filename}".ljust(50) + "-> #{colored_verdict}".rjust(20) 
         else
-            puts "#{key}".ljust(30) + "-> #{colored_verdict}".rjust(20)
+            puts "#{key}".ljust(50) + "-> #{colored_verdict}".rjust(20)
         end
+        # puts "ret: #{key} - value: #{ret_value}"
     end
 
     puts "\n"

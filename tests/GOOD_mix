@@ -1,0 +1,24 @@
+[Entree]
+!(A + B) ^ (D | K) => P # P is False
+X | (A | K ^ Z) => N # N is True
+!T + !X => G # G is true
+!L => M # M is True
+
+?GTX
+
+=AD
+
+[Sortie]
+G : true
+T : false
+X : false
+
+[Sortie_B]
+G : None
+T : None
+X : None
+
+[Sortie_C]
+G : None
+T : None
+X : None

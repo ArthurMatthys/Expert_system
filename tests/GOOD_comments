@@ -1,0 +1,26 @@
+[Entree]
+A + B => C ##
+B + A => D#
+C + D => F #  #  #
+#
+##
+# # A + B => C
+# A + B => C #
+A + B => I # I is true
+?CDF
+=ABD
+
+[Sortie]
+C : true
+D : true
+F : true
+
+[Sortie_B]
+C : true 
+D : true 
+F : true 
+
+[Sortie_C]
+C : None
+An incoherence for letter D has been found
+F : None

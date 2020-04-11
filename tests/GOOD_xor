@@ -1,0 +1,27 @@
+[Entree]
+A ^ B => C  # A and B are True, so C is False
+D ^ E => F  # Only D is True, so F is True
+G ^ H => I  # Only H is True, so I is True
+J ^ K => L  # J and K are False, so J is False
+
+?CFIL
+
+=ABDH
+
+[Sortie]
+C : false
+F : true
+I : true
+L : false
+
+[Sortie_B]
+C : None
+F : None
+I : None
+L : None
+
+[Sortie_C]
+C : None
+F : None
+I : None
+L : None
