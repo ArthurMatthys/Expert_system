@@ -16,7 +16,10 @@ let read_file (filename:string): (string list, string) result=
       then Result.Error "Is a directory"
       else
         let in_chan = open_in filename in
-        Result.Ok (_read in_chan)
+        let lines = _read in_chan in
+        if List.length lines > 10000
+        then Result.Error ("The file contain too many lines")
+        else Result.ok lines
     with Unix_error(e, m1, m2) -> Result.Error (Unix.error_message e)
   
    

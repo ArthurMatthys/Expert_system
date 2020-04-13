@@ -448,7 +448,7 @@ let _ =
     let (check:bool) = Array.length Sys.argv = 4 && ((Sys.argv.(2) = "-c") || (Sys.argv.(3) = "-c")) in
     let (file_res: (string list, string) result) = read_file Sys.argv.(1) in
     if Result.is_error file_res
-    then Printf.eprintf "issue reading file \"%s\" : %s\n" Sys.argv.(1) (Result.get_error file_res)
+    then Printf.eprintf "issue reading file : %s\n" (Result.get_error file_res)
     else
       let (file_content: string list) = Result.get_ok file_res in
       let (lexer_res: (string*int) list list) = List.map lexer file_content in
