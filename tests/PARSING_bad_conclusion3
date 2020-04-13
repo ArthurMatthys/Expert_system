@@ -1,0 +1,17 @@
+[Entree]
+A => (C
+
+
+=A
+
+?A
+
+[Sortie]
+There is a line where a parenthesis is not matched
+
+[Sortie_B]
+There is a line where a parenthesis is not matched
+
+[Sortie_C]
+There is a line where a parenthesis is not matched
+

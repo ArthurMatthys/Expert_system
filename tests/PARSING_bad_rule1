@@ -1,0 +1,20 @@
+[Entree]
+A + B A=> C
+
+
+=A
+
+?C
+
+[Sortie]
+Error in line "A+BA=>C" : Two characters with same type found : "B" and"A"
+
+
+[Sortie_B]
+Error in line "A+BA=>C" : Two characters with same type found : "B" and"A"
+
+
+[Sortie_C]
+Error in line "A+BA=>C" : Two characters with same type found : "B" and"A"
+
+

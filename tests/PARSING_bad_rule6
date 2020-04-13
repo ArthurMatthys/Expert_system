@@ -1,0 +1,20 @@
+[Entree]
+=>
+
+
+=A
+
+?C
+
+[Sortie]
+Error in line "=>" : No left part
+
+
+[Sortie_B]
+Fact in query wasn't found in facts list : C
+
+
+[Sortie_C]
+Fact in query wasn't found in facts list : C
+
+

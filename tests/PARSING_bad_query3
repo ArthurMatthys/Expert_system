@@ -1,0 +1,19 @@
+[Entree]
+A + B => C
+?AbC
+
+
+=A
+
+[Sortie]
+Fatal error: exception Not_found
+
+
+[Sortie_B]
+A : true 
+
+
+[Sortie_C]
+An incoherence for letter A has been found
+
+

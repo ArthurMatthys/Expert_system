@@ -1,0 +1,20 @@
+[Entree]
+A + B = C
+
+
+=A
+
+?C
+
+[Sortie]
+There is two lines containing initial facts
+
+
+[Sortie_B]
+Error in line "A+B=C" : Equal found but wrongly placed
+
+
+[Sortie_C]
+Error in line "A+B=C" : Equal found but wrongly placed
+
+

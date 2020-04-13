@@ -1,0 +1,20 @@
+[Entree]
+A <=>
+
+
+=A
+
+?A
+
+[Sortie]
+Error in line "A<=>" : <=> is not handled in mandatory part
+
+
+[Sortie_B]
+Incoherence either in initial facts or in relations
+
+
+[Sortie_C]
+An incoherence for letter A has been found
+
+

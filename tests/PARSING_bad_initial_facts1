@@ -1,0 +1,19 @@
+[Entree]
+A + B => C
+==ABC
+
+
+?C
+
+[Sortie]
+C : true
+
+
+[Sortie_B]
+Error in line "==ABC" : Equal found but wrongly placed
+
+
+[Sortie_C]
+Error in line "==ABC" : Equal found but wrongly placed
+
+

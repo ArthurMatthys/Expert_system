@@ -1,0 +1,20 @@
+[Entree]
+<=>
+
+
+=A
+
+?C
+
+[Sortie]
+Error in line "<=>" : <=> is not handled in mandatory part
+
+
+[Sortie_B]
+Fact in query wasn't found in facts list : C
+
+
+[Sortie_C]
+Fact in query wasn't found in facts list : C
+
+

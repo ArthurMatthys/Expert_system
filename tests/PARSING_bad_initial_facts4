@@ -1,0 +1,19 @@
+[Entree]
+A + B => C
+-ABC
+
+
+?C
+
+[Sortie]
+Error in line "-ABC" : Two characters with same type found : "A" and"B"
+
+
+[Sortie_B]
+Error in line "-ABC" : Two characters with same type found : "A" and"B"
+
+
+[Sortie_C]
+Error in line "-ABC" : Two characters with same type found : "A" and"B"
+
+

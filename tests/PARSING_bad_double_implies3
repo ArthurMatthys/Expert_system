@@ -1,0 +1,20 @@
+[Entree]
+!A <=> C
+
+
+=A
+
+?C
+
+[Sortie]
+Error in line "!A<=>C" : <=> is not handled in mandatory part
+
+
+[Sortie_B]
+C : false 
+
+
+[Sortie_C]
+C : None
+
+

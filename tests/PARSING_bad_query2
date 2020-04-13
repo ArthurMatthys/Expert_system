@@ -1,0 +1,19 @@
+[Entree]
+A + B => C
+??A
+
+
+=A
+
+[Sortie]
+Fatal error: exception Not_found
+
+
+[Sortie_B]
+Error in line "??A" : Question mark found but wrongly placed
+
+
+[Sortie_C]
+Error in line "??A" : Question mark found but wrongly placed
+
+

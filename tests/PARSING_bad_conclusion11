@@ -1,0 +1,20 @@
+[Entree]
+A => E ^ X
+
+
+=A
+
+?A
+
+[Sortie]
+Error in line "A=>E^X" : with char ^
+
+
+[Sortie_B]
+A : true 
+
+
+[Sortie_C]
+An incoherence for letter A has been found
+
+

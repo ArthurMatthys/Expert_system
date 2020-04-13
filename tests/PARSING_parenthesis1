@@ -1,0 +1,20 @@
+[Entree]
+A + (B+) C => D
+
+
+=A
+
+?C
+
+[Sortie]
+C : false
+
+
+[Sortie_B]
+C : None
+
+
+[Sortie_C]
+C : None
+
+

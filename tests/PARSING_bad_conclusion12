@@ -1,0 +1,20 @@
+[Entree]
+A => B ()
+
+
+=A
+
+?A
+
+[Sortie]
+Error in line "A=>B()" : Two characters with same type found : "(" and")"
+
+
+[Sortie_B]
+Error in line "A=>B()" : Two characters with same type found : "(" and")"
+
+
+[Sortie_C]
+Error in line "A=>B()" : Two characters with same type found : "(" and")"
+
+

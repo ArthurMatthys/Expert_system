@@ -1,0 +1,20 @@
+[Entree]
+A => + B + D
+
+
+=A
+
+?A
+
+[Sortie]
+A : true
+
+
+[Sortie_B]
+Incoherence either in initial facts or in relations
+
+
+[Sortie_C]
+An incoherence for letter A has been found
+
+

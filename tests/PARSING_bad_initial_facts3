@@ -1,0 +1,19 @@
+[Entree]
+A + B => C
+=AbC
+
+
+?C
+
+[Sortie]
+C : true
+
+
+[Sortie_B]
+C : true 
+
+
+[Sortie_C]
+An incoherence for letter C has been found
+
+
