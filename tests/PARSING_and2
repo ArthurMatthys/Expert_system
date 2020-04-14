@@ -7,14 +7,12 @@ A + B + => C
 ?C
 
 [Sortie]
-C : false
+Incomplete operation found
 
 
 [Sortie_B]
-C : None
+Incomplete operation found
 
 
 [Sortie_C]
-C : None
-
-
+Incomplete operation found

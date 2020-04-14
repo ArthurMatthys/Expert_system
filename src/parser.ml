@@ -472,39 +472,47 @@ let _ =
           if Result.is_error init_check
           then Printf.eprintf "Fact in init wasn't found in facts list : %s\n" @@ Result.get_error init_check
           else
-          if not bonus
+          match bonus with
           (* then do_mandatory facts (initialize_facts lst_facts init) *)
           (* HERE WE CHECK THE CORRECTNESS OF THE FILE --> NEED TO PARSE AND CHECK THE RETURN *)
-          then let _ = List.iter check_correctness_imply_list facts in
+          | false -> let _ = List.iter check_correctness_imply_list facts in
             let (trees: exp_ast list) = List.map (fun e -> exp_ast_of_list_mandatory e) facts in
-            (* let _ = List.map print_exp_ast trees in *)
-            (* let dictionnary_ready = initialize_mandatory (List.tl init) lst_facts in *)
-            let (result_query: (((string, bool option) Hashtbl.t, string) result list)) = do_mandatory trees (List.tl (remove_bool_opt query)) @@ initialize_mandatory (List.tl init) lst_facts in
-            (* Do the same with all letters, in order to check for incoherence *)
-            let (result_global: (((string, bool option) Hashtbl.t, string) result list)) = do_mandatory trees (remove_bool_opt2 lst_facts) @@ initialize_mandatory (List.tl init) lst_facts in
-            let _ = print_result_mandatory result_global result_query (List.tl (remove_bool_opt query))
-            in ()
-          else 
-            (* Construct the tree of the bonus *)
-            (* let _ = Printf.fprintf Stdlib.stdout "1\n" in *)
+            let (not_correct : bool) = ((List.length (List.filter check_correctness_tree trees)) <> 0) in
+            if not_correct
+            then Printf.eprintf "Incomplete operation found\n"
+            else
+              (* let _ = List.map print_exp_ast trees in *)
+              (* let dictionnary_ready = initialize_mandatory (List.tl init) lst_facts in *)
+              let (result_query: (((string, bool option) Hashtbl.t, string) result list)) = do_mandatory trees (List.tl (remove_bool_opt query)) @@ initialize_mandatory (List.tl init) lst_facts in
+              (* Do the same with all letters, in order to check for incoherence *)
+              let (result_global: (((string, bool option) Hashtbl.t, string) result list)) = do_mandatory trees (remove_bool_opt2 lst_facts) @@ initialize_mandatory (List.tl init) lst_facts in
+              let _ = print_result_mandatory result_global result_query (List.tl (remove_bool_opt query))
+              in ()
+          (* Construct the tree of the bonus *)
+          (* let _ = Printf.fprintf Stdlib.stdout "1\n" in *)
+          | true ->
             let (tree_bonus:exp_ast) = exp_ast_of_list_bonus facts in              
-            (* let _ = Printf.fprintf Stdlib.stdout "2\n" in *)
+            let (not_correct : bool) = check_correctness_tree tree_bonus in
+            if not_correct
+            then Printf.eprintf "Incomplete operation found\n"
+            else
+              (* let _ = Printf.fprintf Stdlib.stdout "2\n" in *)
 
 
-            (* let _ = print_exp_ast tree_bonus in *)
-            (* Construct a tuple list of all the facts [used later for decoding of bites]  *)
-            let ((list_none:(string*bool option)list),(list_true:(string*bool option)list),(tupled_facts:(string * int) list)) = dict_to_tuplelist @@ initialize_mandatory (List.tl init) lst_facts in
-            (* let _ = Printf.fprintf Stdlib.stdout "3\n" in *)
+              (* let _ = print_exp_ast tree_bonus in *)
+              (* Construct a tuple list of all the facts [used later for decoding of bites]  *)
+              let ((list_none:(string*bool option)list),(list_true:(string*bool option)list),(tupled_facts:(string * int) list)) = dict_to_tuplelist @@ initialize_mandatory (List.tl init) lst_facts in
+              (* let _ = Printf.fprintf Stdlib.stdout "3\n" in *)
 
-            (* let _ = Printf.fprintf Stdlib.stdout "DEBUG TUPLELIST \n" in
-               let _ = List.iter (fun (str,ind) -> Printf.fprintf Stdlib.stdout "|%s:%d" str ind) tupled_facts in *)
-            (* Do bonus execution *)
-            let _ = do_bonus tree_bonus (list_none,list_true,tupled_facts) (remove_bool_opt query) check @@ initialize_mandatory (List.tl init) lst_facts
-            in ()
-                (*
-                  let (trees: exp_ast) = unite_facts in
-                  let _ = print_exp_ast trees in ()
-                *)
+              (* let _ = Printf.fprintf Stdlib.stdout "DEBUG TUPLELIST \n" in
+                 let _ = List.iter (fun (str,ind) -> Printf.fprintf Stdlib.stdout "|%s:%d" str ind) tupled_facts in *)
+              (* Do bonus execution *)
+              let _ = do_bonus tree_bonus (list_none,list_true,tupled_facts) (remove_bool_opt query) check @@ initialize_mandatory (List.tl init) lst_facts
+              in ()
+                  (*
+                    let (trees: exp_ast) = unite_facts in
+                    let _ = print_exp_ast trees in ()
+                  *)
 
 
 (* let _ = List.map print_exp_ast trees in *)

@@ -7,14 +7,10 @@ A + B == C
 ?C
 
 [Sortie]
-There is two lines containing initial facts
-
+Error in line "A+B==C" : Character not valid : "="
 
 [Sortie_B]
-Error in line "A+B==C" : Equal found but wrongly placed
-
+Error in line "A+B==C" : Character not valid : "="
 
 [Sortie_C]
-Error in line "A+B==C" : Equal found but wrongly placed
-
-
+Error in line "A+B==C" : Character not valid : "="

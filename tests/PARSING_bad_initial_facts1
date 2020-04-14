@@ -6,7 +6,7 @@ A + B => C
 ?C
 
 [Sortie]
-C : true
+Error in line "==ABC" : Equal found but wrongly placed
 
 
 [Sortie_B]

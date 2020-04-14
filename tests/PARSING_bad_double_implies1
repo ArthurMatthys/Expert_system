@@ -7,14 +7,12 @@ A + B <= C
 ?C
 
 [Sortie]
-Error in line "A+B<=C" : Two characters with same type found : "<" and"="
+Error in line "A+B<=C" : Character not valid : "<"
 
 
 [Sortie_B]
-Error in line "A+B<=C" : Two characters with same type found : "<" and"="
+Error in line "A+B<=C" : Character not valid : "<"
 
 
 [Sortie_C]
-Error in line "A+B<=C" : Two characters with same type found : "<" and"="
-
-
+Error in line "A+B<=C" : Character not valid : "<"

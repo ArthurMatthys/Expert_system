@@ -7,14 +7,12 @@ A => C +
 ?A
 
 [Sortie]
-A : true
-
+Incomplete operation found
 
 [Sortie_B]
-Incoherence either in initial facts or in relations
-
+Incomplete operation found
 
 [Sortie_C]
-An incoherence for letter A has been found
+Incomplete operation found
 
 

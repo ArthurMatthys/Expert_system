@@ -22,6 +22,8 @@ let lexer (str:string): ((string*int) list)=
   let (str_cleaned: string list) = explode @@ String.escaped str in
   let rec lex (depth:int) (lst:string list) : ((string*int )list) = match lst with
     | [] -> []
+    | "<" :: "=" :: ">" :: t -> ("<=>", 3) :: lex depth t
+    | "=" :: ">" :: t -> ("=>", 4) :: lex depth t
     | h::t -> let comp = ((=) h) in
       if h = " " 
       then lex depth t
@@ -30,8 +32,6 @@ let lexer (str:string): ((string*int) list)=
         else if List.exists comp implications
         then match t with
           | [] -> (h, 2) :: []
-          | "="::">"::tl -> ("<=>", 3) :: lex depth tl
-          | ">"::tl -> ("=>", 4) :: lex depth tl
           | _ -> (h, 2) :: lex depth t
           else if List.exists comp conditions
           (* then begin Printf.fprintf Stdlib.stdout "debug-lex: |%s|\n" h ; (h, (5 + 4*depth + (index_of conditions h))) :: lex depth t end  *)

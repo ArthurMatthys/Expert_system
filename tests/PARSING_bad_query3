@@ -6,14 +6,13 @@ A + B => C
 =A
 
 [Sortie]
-Fatal error: exception Not_found
+Error in line "?AbC" : Character not valid : "b"
 
 
 [Sortie_B]
-A : true 
+Error in line "?AbC" : Character not valid : "b" 
 
 
 [Sortie_C]
-An incoherence for letter A has been found
-
+Error in line "?AbC" : Character not valid : "b"
 

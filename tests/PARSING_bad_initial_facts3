@@ -1,4 +1,4 @@
-[Entree]
+#[Entree]
 A + B => C
 =AbC
 
@@ -6,14 +6,11 @@ A + B => C
 ?C
 
 [Sortie]
-C : true
-
+Error in line "=AbC" : Character not valid : "b"
 
 [Sortie_B]
-C : true 
 
+Error in line "=AbC" : Character not valid : "b"
 
 [Sortie_C]
-An incoherence for letter C has been found
-
-
+Error in line "=AbC" : Character not valid : "b"

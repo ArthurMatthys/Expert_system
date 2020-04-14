@@ -25,6 +25,24 @@ let print_exp_ast (expr:exp_ast) : unit =
   in
   print expr ; print_newline ()
 
+  (*
+    Check correctness of tree (no "y" char present)
+    Returns true if tree contains the letter "y"
+ *)
+let check_correctness_tree (tree : exp_ast) : bool =
+  let rec _check_correctness_tree (tree : exp_ast) : bool = 
+    match tree with
+    | Imply (left, right) -> _check_correctness_tree left || _check_correctness_tree right
+    | Empty -> false
+    | Letter l -> l = "y" (* y is the char being *)
+    | And (left, right) -> _check_correctness_tree left || _check_correctness_tree right
+    | Not (right) -> _check_correctness_tree right
+    | Or (left, right) -> _check_correctness_tree left || _check_correctness_tree right
+    | Xor (left, right) -> _check_correctness_tree left || _check_correctness_tree right
+    | _ -> false
+  in
+  _check_correctness_tree tree
+
 
 let _filteri (func: int -> 'a -> bool) (lst:'a list): 'a list = 
   let rec loop__filteri (func: int -> 'a -> bool) (lst:'a list) (index: int): 'a list =
@@ -62,7 +80,7 @@ let rec exp_ast_of_list_bonus (facts:((string*int) list) list) : exp_ast =
                     else find_priority_ope t index_max value (index + 1)
     in
     match facts_list with
-    | [] -> Empty
+    | [] -> Letter "y"
     | (h,v)::[] -> Letter h
     | _ -> let split_index = find_priority_ope facts_list 0 0 0 in
       let (left:(string*int)list) = remove_parenthesis @@ _filteri (fun index _ -> index < split_index) facts_list in
@@ -74,7 +92,7 @@ let rec exp_ast_of_list_bonus (facts:((string*int) list) list) : exp_ast =
       | ("|", _) -> Or (inner_recursion left, inner_recursion right)
       | ("^", _) -> Xor (inner_recursion left, inner_recursion right)
       | ("!", _) -> Not (inner_recursion right)
-      | _ -> Empty
+      | _ -> Letter "y"
   in
   match facts with
   | [] -> Empty
@@ -91,7 +109,7 @@ let rec exp_ast_of_list_mandatory (facts_list:(string*int)list) : exp_ast =
                   else find_priority_ope t index_max value (index + 1)
   in
   match facts_list with
-  | [] -> Empty
+  | [] -> Letter "y"
   | (h,v)::[] -> Letter h
   | _ -> let split_index = find_priority_ope facts_list 0 0 0 in
     let (left:(string*int)list) = remove_parenthesis @@ _filteri (fun index _ -> index < split_index) facts_list in
@@ -102,4 +120,4 @@ let rec exp_ast_of_list_mandatory (facts_list:(string*int)list) : exp_ast =
     | ("|", _) -> Or (exp_ast_of_list_mandatory left, exp_ast_of_list_mandatory right)
     | ("^", _) -> Xor (exp_ast_of_list_mandatory left, exp_ast_of_list_mandatory right)
     | ("!", _) -> Not (exp_ast_of_list_mandatory right)
-    | _ -> Empty
+    | _ -> Letter "y"

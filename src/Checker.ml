@@ -1,3 +1,8 @@
+let alphabet = ["A";"B";"C";"D";"E";"F";"G";"H";"I";"J";"K";"L";"M";"N";"O";"P";"Q";"R";"S";"T";"U";"V";"W";"X";"Y";"Z";"+";"^";"!";"|";"(";")";]
+let name_facts = ["A";"B";"C";"D";"E";"F";"G";"H";"I";"J";"K";"L";"M";"N";"O";"P";"Q";"R";"S";"T";"U";"V";"W";"X";"Y";"Z";]
+let next_ope = ["^";"|";"+";"=>";"<=>";")";"(";]
+
+
 let rec recreate_line (line:(string*int)list):string = match line with
   | [] -> ""
   | (h,_)::t -> h ^ (recreate_line t)
@@ -14,20 +19,23 @@ let rec _check_mandatory (line:(string*int) list) (left:bool) (imply:int) (right
   | ("=>", _)::t -> if imply = 0 
     then _check_mandatory t left 3 right
     else Result.Error ("Multiple implications found")
-  | ("=", _)::t -> if imply = 0 || left
+  | ("=", _)::t -> if imply = 0
     then _check_mandatory t true 1 right
     else Result.Error ("Equal found but wrongly placed")
-  | ("?", _)::t -> if imply = 0 || left
+  | ("?", _)::t -> if imply = 0
     then _check_mandatory t true 2 right
     else Result.Error ("Question mark found but wrongly placed")
   | (h1,v1)::(h2,v2)::t -> if (v1 = v2 && h2 <> "!") && imply <> 1 && imply <> 2
     then Result.Error ("Two characters with same type found : \"" ^ h1 ^ "\" and\"" ^ h2 ^ "\"")
-    else if v1 < 0
+    else if v1 < 0 || (not @@ List.mem h1 alphabet) || ((imply = 1 || imply = 2) && not @@ List.mem h1 name_facts)
       then Result.Error ("Character not valid : \"" ^ h1 ^ "\"")
-      else if imply > 0
-        then _check_mandatory ((h2,v2)::t) left imply true
-        else _check_mandatory ((h2,v2)::t) true imply right
-  | (h,v)::t -> if v < 0
+      else if (imply <>1 && imply <> 2 && List.mem h1 name_facts && not @@ List.mem h2 next_ope)
+        then Result.Error ("Character not valid : \"" ^ h2 ^ "\"")
+        else if imply > 0
+          then _check_mandatory ((h2,v2)::t) left imply true
+          else _check_mandatory ((h2,v2)::t) true imply right
+  | (h,v)::t -> if v < 0 || (not @@ List.mem h alphabet) || ((imply = 1 || imply = 2) && not @@ List.mem h name_facts)
+
     then Result.Error ("Character not valid : \"" ^ h ^ "\"")
     else if imply > 0
       then _check_mandatory t left imply true
@@ -80,12 +88,15 @@ let rec _check_bonus (line:(string*int) list) (content:bool) (imply:int) : ((int
     else _check_bonus t content 2
   | (h1,v1)::(h2,v2)::t -> if (v1 = v2 && h2 <> "!") && imply <> 1 && imply <> 2
     then Result.Error ("Two characters with same type found : \"" ^ h1 ^ "\" and\"" ^ h2 ^ "\"")
-    else if v1 < 0
+    else if v1 < 0 || (not @@ List.mem h1 alphabet) || ((imply = 1 || imply = 2) && not @@ List.mem h1 name_facts) 
       then Result.Error ("Character not valid : \"" ^ h1 ^ "\"")
-      else if v1 = 1
-        then _check_bonus ((h2,v2)::t) true imply
-        else _check_bonus ((h2,v2)::t) content imply
-  | (h,v)::t -> if v < 0
+      else if (imply <>1 && imply <> 2 && List.mem h1 name_facts && not @@ List.mem h2 next_ope)
+        then Result.Error ("Character not valid : \"" ^ h2 ^ "\"")
+        else if v1 = 1
+          then _check_bonus ((h2,v2)::t) true imply
+          else _check_bonus ((h2,v2)::t) content imply
+  | (h,v)::t -> if (v < 0) || (not @@ List.mem h alphabet) || ((imply = 1 || imply = 2) && not @@ List.mem h name_facts)
+
     then Result.Error ("Character not valid : \"" ^ h ^ "\"")
     else if imply > 0
       then _check_bonus t content imply

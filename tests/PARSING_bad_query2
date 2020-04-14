@@ -6,7 +6,7 @@ A + B => C
 =A
 
 [Sortie]
-Fatal error: exception Not_found
+Error in line "??A" : Question mark found but wrongly placed
 
 
 [Sortie_B]

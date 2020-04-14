@@ -2,19 +2,15 @@
 A !! B => C
 
 
-=A
+=!
 
 ?C
 
 [Sortie]
-C : false
-
+Error in line "A!!B=>C" : Character not valid : "!"
 
 [Sortie_B]
-C : None
-
+Error in line "A!!B=>C" : Character not valid : "!"
 
 [Sortie_C]
-C : None
-
-
+Error in line "A!!B=>C" : Character not valid : "!"

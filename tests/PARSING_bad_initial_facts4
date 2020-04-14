@@ -6,14 +6,11 @@ A + B => C
 ?C
 
 [Sortie]
-Error in line "-ABC" : Two characters with same type found : "A" and"B"
-
+Error in line "-ABC" : Character not valid : "-"
 
 [Sortie_B]
-Error in line "-ABC" : Two characters with same type found : "A" and"B"
-
+Error in line "-ABC" : Character not valid : "-"
 
 [Sortie_C]
-Error in line "-ABC" : Two characters with same type found : "A" and"B"
-
+Error in line "-ABC" : Character not valid : "-"
 
