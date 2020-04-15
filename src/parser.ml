@@ -282,15 +282,18 @@ let rec add (init:int) (max:int) : int =
 
 (* Create the list of ints satisfying the equation *)
 let get_lst (tree:exp_ast) (tupled_facts:(string * int) list) (nbr_init: int) (nbr_max:int) : (int list) = 
-  let rec get_lst_rec (nbr:int) = 
+  let rec get_lst_rec (lst:int list) (nbr:int) (count:int) : (int list) = 
     if nbr > nbr_max
-    then []
+    then lst
     else
     if evaluate_bonus tree tupled_facts nbr
-    then nbr :: get_lst_rec (nbr+1)
-    else get_lst_rec (nbr+1)
+    then 
+      if (count mod 1000) = 0 
+      then let _ = print_endline @@ string_of_int count in (get_lst_rec [@tailcall]) (nbr :: lst) (nbr+1) (count + 1)
+      else (get_lst_rec [@tailcall]) (nbr :: lst) (nbr+1) (count + 1)
+    else (get_lst_rec [@tailcall]) lst (nbr+1) count
   in
-  get_lst_rec nbr_init
+  get_lst_rec [] nbr_init 0
 
 (* Compare bitwisely the ints *)
 (* let bitcompare_int (int_lst: int list) : int =
