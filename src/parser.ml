@@ -287,10 +287,7 @@ let get_lst (tree:exp_ast) (tupled_facts:(string * int) list) (nbr_init: int) (n
     then lst
     else
     if evaluate_bonus tree tupled_facts nbr
-    then 
-      if (count mod 1000) = 0 
-      then let _ = print_endline @@ string_of_int count in (get_lst_rec [@tailcall]) (nbr :: lst) (nbr+1) (count + 1)
-      else (get_lst_rec [@tailcall]) (nbr :: lst) (nbr+1) (count + 1)
+    then (get_lst_rec [@tailcall]) (nbr :: lst) (nbr+1) (count + 1)
     else (get_lst_rec [@tailcall]) lst (nbr+1) count
   in
   get_lst_rec [] nbr_init 0
