@@ -1,7 +1,7 @@
 require 'tempfile'
 require 'open3'
 
-PATH="../tests/"
+PATH="./tests/"
 OPTIONS=["", "-b", "-b -c"]
 
 def     create_and_execute_tmp_file(entree, options)
@@ -11,7 +11,7 @@ def     create_and_execute_tmp_file(entree, options)
     Tempfile.create { |f| 
         f << entree;
         f.rewind;
-        value, stderr, status = Open3.capture3("./a.out #{f.path} #{options}")
+        value, stderr, status = Open3.capture3("./expert_system.exe #{f.path} #{options}")
         if value.empty? then
             value = stderr
         end
@@ -23,7 +23,7 @@ def     compare_expected_result(filename)
 
     # Read the file in one string
     text = File.read(PATH + filename)
-    
+    puts PATH + filename 
     # Parse and store with Regex
     output = Hash.new
     entree = text.scan(/\[Entree\]((.|\n)*?)\[Sortie\]/)[0][0]
@@ -57,7 +57,7 @@ def     main()
     a = 0
     # Loop on all tests
     Dir.foreach(PATH) do |filename|
-        next if filename == '.' or filename == '..'
+        next if filename == '.' or filename == '..' or filename == "test.rb" 
         a += compare_expected_result(filename)
     end
 

@@ -1,8 +1,6 @@
-open Unix
 open Btree
 open Checker
 open Lexer
-open Library
 open ReadFile
 open Operation
 
@@ -86,7 +84,7 @@ let find_tree (tree_lst : exp_ast list) (fact : string) : exp_ast list =
 *)
   let rec dig_right (tree : exp_ast) : bool = 
     match tree with
-    | Imply (left, right) -> dig_right right
+    | Imply (_, right) -> dig_right right
     | Empty -> false
     | Letter l -> l = fact
     | And (left, right) -> dig_right left || dig_right right
@@ -109,7 +107,7 @@ let split_assignations_on_2_lists (tree: exp_ast): ((string list)*(string list))
   let (negative_list: string list ref) = ref [] in
   let rec dig_right_split_lists (tree : exp_ast) (state_negation : int) : unit =
     match tree with
-    | Imply (left, right) -> dig_right_split_lists right state_negation
+    | Imply (_, right) -> dig_right_split_lists right state_negation
     | Empty -> ()
     | Letter l -> if (state_negation mod 2 = 1) then negative_list := l::!negative_list else positive_list := l::!positive_list
     | And (left, right) -> begin dig_right_split_lists left state_negation ; dig_right_split_lists right state_negation end
@@ -140,7 +138,7 @@ let check_incoherence_in_lst (status_list_execution: (((((string, bool option) H
 
 (* Tail recursive function that changes the value of the current_table, and checks at the same time any error*)
 let assign_result_to_hashtbl_and_check_error (positive_assign: string list) (status_evaluation: (bool option)) 
-    (current_table: ((string, bool option) Hashtbl.t)) (positive_list: bool): ((unit, string) result) =
+    (current_table: ((string, bool option) Hashtbl.t)): ((unit, string) result) =
   let rec assign (positive_assign: string list) : ((unit, string) result) =
     match positive_assign with
     | [] -> Result.ok ()
@@ -179,7 +177,7 @@ let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((stri
     | Or (left, right) -> my_or (evaluate left past_queries current_table) (evaluate right past_queries current_table)
     | Xor (left, right) -> my_xor (evaluate left past_queries current_table) (evaluate right past_queries current_table)
     | Not (right) -> my_not (evaluate right past_queries current_table)
-    | Imply (left, right) ->  evaluate left past_queries current_table
+    | Imply (left, _) ->  evaluate left past_queries current_table
     | _ -> Result.ok (Some false)
   and
     (* Function that evaluates each tree and parses for any error. If none is found, change value when necessary, or return error *)
@@ -202,8 +200,8 @@ let do_mandatory (facts: exp_ast list) (queries: string list) (facts_dict:((stri
           else Result.ok (Some true)
         in
         (* Change status in hashtabl, and check wether error occurs *)
-        let (modified_hshtable_positive: ((unit, string) result)) = assign_result_to_hashtbl_and_check_error positive_assign (Result.get_ok status_evaluation) current_table true in
-        let (modified_hshtable_negative: ((unit, string) result)) = assign_result_to_hashtbl_and_check_error negative_assign (Result.get_ok neg_status_evaluation) current_table false in
+        let (modified_hshtable_positive: ((unit, string) result)) = assign_result_to_hashtbl_and_check_error positive_assign (Result.get_ok status_evaluation) current_table in
+        let (modified_hshtable_negative: ((unit, string) result)) = assign_result_to_hashtbl_and_check_error negative_assign (Result.get_ok neg_status_evaluation) current_table in
         (* Check if error is found in change of hashtable, if not, return it *)
         if Result.is_error modified_hshtable_positive
         then Result.Error (Result.get_error modified_hshtable_positive)
@@ -324,7 +322,7 @@ let bitcompare_int (int_lst : int list) (nbr_max:int) : int =
 let retrieve_bite_value (index_letter:int) (actual_nbr:int) : bool =
   (((1 lsl index_letter) land actual_nbr) > 0)
 
-let do_bonus (tree:exp_ast) ((list_none,list_true,tupled_facts):((string*bool option)list)*((string*bool option)list)*((string * int) list))
+let do_bonus (tree:exp_ast) ((list_none,_,tupled_facts):((string*bool option)list)*((string*bool option)list)*((string * int) list))
     (queries: string list) (check:bool) (facts_dict:((string, bool option) Hashtbl.t)): unit =
   (* let _ = Printf.fprintf Stdlib.stdout "DEBUG-check: |%s|\n" (string_of_bool check) in *)
   let (bit_max:int) = List.length tupled_facts in 
@@ -372,10 +370,8 @@ let dict_to_tuplelist (dict:(string, bool option) Hashtbl.t) : (((string*bool op
   (* Get length list_none, to add in index *)
   let (nbr: int) = List.length list_none in
   (* Create the tuple, with at last the list of key-index elements *)
-  (list_none, list_true, (List.append (List.mapi (fun ind (string,bool) -> (string, ind)) list_none) (List.mapi (fun ind (string,bool) -> (string, ind + nbr)) list_true)))
+  (list_none, list_true, (List.append (List.mapi (fun ind (string,_) -> (string, ind)) list_none) (List.mapi (fun ind (string,_) -> (string, ind + nbr)) list_true)))
 
-let initialize_facts (lst_facts: (string*(bool option)) list) (init: (string*int) list) : (string, bool option) Hashtbl.t =
-  let m = Hashtbl.create 26 in m
 
 (* 
     Aim fo the function : 
@@ -420,11 +416,11 @@ let check_correctness_imply_list (lst:(string*int) list): unit =
 
 let rec remove_bool_opt (lst : (string*int) list) : string list = match lst with
   | [] -> []
-  | (h,v)::t -> h :: remove_bool_opt t
+  | (h,_)::t -> h :: remove_bool_opt t
 
 let rec remove_bool_opt2 (lst : (string*bool option) list) : string list = match lst with
   | [] -> []
-  | (h,v)::t -> h :: remove_bool_opt2 t
+  | (h,_)::t -> h :: remove_bool_opt2 t
 
 let print_result_mandatory (result_global: (((string, bool option) Hashtbl.t, string) result list)) (result_queries:(((string, bool option) Hashtbl.t, string) result list))
     (queries: string list) : unit =
@@ -473,7 +469,6 @@ let _ =
           then Printf.eprintf "Fact in init wasn't found in facts list : %s\n" @@ Result.get_error init_check
           else
           match bonus with
-          (* then do_mandatory facts (initialize_facts lst_facts init) *)
           (* HERE WE CHECK THE CORRECTNESS OF THE FILE --> NEED TO PARSE AND CHECK THE RETURN *)
           | false -> let _ = List.iter check_correctness_imply_list facts in
             let (trees: exp_ast list) = List.map (fun e -> exp_ast_of_list_mandatory e) facts in

@@ -15,7 +15,7 @@ let rec _check_mandatory (line:(string*int) list) (left:bool) (imply:int) (right
       else if not left
         then Result.Error ("No left part")
         else Result.ok (imply)
-  | ("<=>",_)::t -> Result.Error ("<=> is not handled in mandatory part") 
+  | ("<=>",_)::_ -> Result.Error ("<=> is not handled in mandatory part") 
   | ("=>", _)::t -> if imply = 0 
     then _check_mandatory t left 3 right
     else Result.Error ("Multiple implications found")

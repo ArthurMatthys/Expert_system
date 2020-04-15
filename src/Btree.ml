@@ -1,5 +1,4 @@
 open Library
-open Operation
 
 type exp_ast =
   | Equi of exp_ast * exp_ast
@@ -81,7 +80,7 @@ let rec exp_ast_of_list_bonus (facts:((string*int) list) list) : exp_ast =
     in
     match facts_list with
     | [] -> Letter "y"
-    | (h,v)::[] -> Letter h
+    | (h,_)::[] -> Letter h
     | _ -> let split_index = find_priority_ope facts_list 0 0 0 in
       let (left:(string*int)list) = remove_parenthesis @@ _filteri (fun index _ -> index < split_index) facts_list in
       let (right:(string*int)list) = remove_parenthesis @@ _filteri (fun index _ -> index > split_index) facts_list in
@@ -110,7 +109,7 @@ let rec exp_ast_of_list_mandatory (facts_list:(string*int)list) : exp_ast =
   in
   match facts_list with
   | [] -> Letter "y"
-  | (h,v)::[] -> Letter h
+  | (h,_)::[] -> Letter h
   | _ -> let split_index = find_priority_ope facts_list 0 0 0 in
     let (left:(string*int)list) = remove_parenthesis @@ _filteri (fun index _ -> index < split_index) facts_list in
     let (right:(string*int)list) = remove_parenthesis @@ _filteri (fun index _ -> index > split_index) facts_list in

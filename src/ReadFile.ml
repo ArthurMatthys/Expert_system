@@ -2,10 +2,10 @@ open Unix
 
 let _read (in_chan:in_channel): string list =
   let rec _rec_read n =
-    match input_line in_chan with
+    match input_line n with
       | line -> if String.equal line "" then 
-                    _rec_read in_chan
-                  else line :: _rec_read in_chan
+                    _rec_read n
+                  else line :: _rec_read n
       | exception End_of_file -> []
 in _rec_read in_chan
 
@@ -20,8 +20,8 @@ let read_file (filename:string): (string list, string) result=
         if List.length lines > 10000
         then Result.Error ("The file contain too many lines")
         else Result.ok lines
-    with Unix_error(e, m1, m2) -> Result.Error (Unix.error_message e)
-  
+    with Unix_error(e, _, _) -> Result.Error (Unix.error_message e)
+ 
    
 
 

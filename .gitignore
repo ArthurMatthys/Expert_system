@@ -1,4 +1,6 @@
 tags
-expert_system
+dune-project
+expert_system.exe
 _build
 *.swp
+*/.merlin
